@@ -84,7 +84,7 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-username/steel-defect-detection.git
+git clone https://github.com/YfengJ/steel-defect-detection.git
 cd steel-defect-detection
 
 # 创建虚拟环境（推荐）
