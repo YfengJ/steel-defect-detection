@@ -1,11 +1,14 @@
 <p align="center">
-  <h1 align="center">🛡️ 基于 YOLOv8 的智能钢铁表面缺陷检测系统</h1>
+  <h1 align="center">Steel Surface Defect Detection with YOLOv8</h1>
   <p align="center">
-    <b>Steel Surface Defect Detection System Based on YOLOv8</b>
+    An open source YOLOv8 project for steel surface defect detection, training, validation, inference, and GUI demos.
+  </p>
+  <p align="center">
+    <a href="README.md">English</a> | <a href="README.zh-CN.md">简体中文</a>
   </p>
   <p align="center">
     <img src="https://img.shields.io/badge/Python-3.10%20recommended-blue?logo=python&logoColor=white" alt="Python">
-    <img src="https://img.shields.io/badge/YOLOv8-Ultralytics-purple?logo=yolo" alt="YOLOv8">
+    <img src="https://img.shields.io/badge/YOLOv8-Ultralytics-purple" alt="YOLOv8">
     <img src="https://img.shields.io/badge/GUI-ttkbootstrap-green" alt="GUI">
     <img src="https://img.shields.io/badge/Dataset-NEU--DET-orange" alt="Dataset">
     <img src="https://img.shields.io/badge/License-AGPL--3.0-red" alt="License">
@@ -14,290 +17,208 @@
 
 ---
 
-## 📖 项目简介
+## Overview
 
-本项目是一个基于 **YOLOv8** 的 **钢铁表面缺陷检测开源项目**，面向 NEU-DET 等钢铁表面缺陷数据集，覆盖模型训练、验证、图片/视频推理和 GUI 演示等基础流程。
+This repository is a learning-oriented steel surface defect detection project built on **YOLOv8**. It targets NEU-DET style steel defect datasets and provides a practical workflow for model training, validation, image inference, video inference, and a desktop GUI demo.
 
-项目适合学生课程设计、深度学习/目标检测初学者，以及想了解工业视觉缺陷检测流程的学习者。当前目标不是工业生产级闭环系统，而是提供一个真实、可运行、可持续维护的 YOLOv8 学习和实验仓库。
+It is designed for students, computer vision beginners, and industrial vision learners who want a real, runnable, and maintainable open source project rather than an unmaintained collection of scripts.
 
-系统提供了一套 **图形化操作界面（GUI）**，支持单图检测、批量检测、实时视频流检测等多种检测模式，并能自动生成包含缺陷分类统计、置信度分布等信息的可视化分析报告。
+> Datasets, training outputs, and model weights are not included in this repository. Prepare them locally by following [docs/dataset.md](docs/dataset.md).
 
-> 注意：仓库不包含 NEU-DET 数据集、训练结果、`.pt/.pth` 权重或其他大文件。请按照 [docs/dataset.md](docs/dataset.md) 自行准备数据集和模型权重。
+## Features
 
-### ✨ 核心特性
+| Feature | Description |
+| --- | --- |
+| Single-image inference | Load one image and visualize detected defect boxes. |
+| Batch inference | Process an image folder and generate summary reports. |
+| Video inference | Run defect detection on video files or camera streams. |
+| Model training | Train YOLOv8 models from the command line or GUI. |
+| Model validation | Evaluate trained weights and inspect mAP metrics. |
+| GUI demo | Use a `ttkbootstrap` desktop interface for common workflows. |
 
-| 特性 | 描述 |
-|------|------|
-| 🖼️ **单图检测** | 上传单张图片，快速检测并可视化标注缺陷区域 |
-| 📂 **批量检测** | 一键处理整个文件夹，自动生成分析报告与统计图表 |
-| 📹 **视频流检测** | 支持视频文件与摄像头的实时缺陷检测 |
-| ⚙️ **模型训练** | 在 GUI 中直接配置参数并启动模型训练流程 |
-| 📊 **模型验证** | 加载训练好的模型进行数据集验证，查看 mAP 等指标 |
-| 📈 **可视化报告** | 自动统计缺陷类别占比（饼图）和置信度分布（直方图） |
+## Documentation
 
----
-
-## 📚 项目文档
-
-- [macOS / Apple Silicon 运行说明](docs/macos.md)
-- [数据集准备说明](docs/dataset.md)
-- [常见问题排查](docs/troubleshooting.md)
+- [macOS and Apple Silicon guide](docs/macos.md)
+- [Dataset preparation](docs/dataset.md)
+- [Troubleshooting](docs/troubleshooting.md)
 - [Roadmap](ROADMAP.md)
 - [Support](SUPPORT.md)
-- [Security Policy](SECURITY.md)
+- [Security policy](SECURITY.md)
 
----
+## Screenshots
 
-## 🖥️ 系统界面展示
+### Single-image inference
 
-### 🖼️ 单图检测
+![Single-image inference](screenshots/predict.png)
 
-选择模型和图片，一键分析缺陷类型与置信度。
+### Batch inference
 
-![单图检测界面](screenshots/predict.png)
+![Batch inference](screenshots/batch.png)
 
-### 📂 批量检测
+### Video inference
 
-批量处理图片目录，自动生成统计报告和可视化图表。
+![Video inference](screenshots/video.png)
 
-![批量检测界面](screenshots/batch.png)
+### Training
 
-### 📹 视频流检测
+![Training](screenshots/train.png)
 
-支持视频文件和摄像头实时检测。
+### Validation
 
-![视频流检测界面](screenshots/video.png)
+![Validation](screenshots/val.png)
 
-### ⚙️ 模型训练
+## Project Structure
 
-可视化配置训练参数，一键启动训练。
-
-![模型训练界面](screenshots/train.png)
-
-### 📊 模型验证
-
-验证模型性能，查看 mAP 等评估指标。
-
-![模型验证界面](screenshots/val.png)
-
----
-
-## 🏗️ 系统架构
-
-```
-项目根目录/
-├── ui.py                  # 🖥️ GUI 主程序（ttkbootstrap 界面）
-├── train.py               # ⚙️ 模型训练脚本
-├── predict.py             # 🔮 推理预测脚本（单图/批量）
-├── val.py                 # 📊 模型验证脚本
-├── video_predict.py       # 📹 视频推理脚本
-├── translate.py           # 🔄 VOC XML → YOLO TXT 标注格式转换工具
-├── dataset.yaml           # 📋 数据集配置文件
-├── requirements.txt       # 📦 项目依赖
-├── docs/                  # 📚 项目运行和维护文档
-├── .github/               # 🤖 CI、Dependabot 和 Issue 模板
-├── datasets/              # 🗂️ 本地数据集目录（不提交）
-│   └── NEU-DET/
-│       ├── images/        #    原始图片 (train/val/test)
-│       ├── labels/        #    YOLO 格式标注
-│       └── annotations/   #    VOC XML 原始标注
-├── runs/                  # 📁 训练与推理结果输出目录（不提交）
-└── weights/ 或 *.pt        # 🏋️ 本地模型权重（不提交）
+```text
+steel-defect-detection/
+├── ui.py                  # Desktop GUI built with ttkbootstrap
+├── train.py               # YOLOv8 training entrypoint
+├── predict.py             # Image and batch prediction entrypoint
+├── val.py                 # Validation entrypoint
+├── video_predict.py       # Video inference helper
+├── translate.py           # VOC XML to YOLO TXT conversion utility
+├── dataset.yaml           # Dataset configuration
+├── requirements.txt       # Python dependencies
+├── docs/                  # Project setup and maintenance docs
+├── .github/               # CI, Dependabot, and issue templates
+├── datasets/              # Local datasets, ignored by git
+├── runs/                  # Local training/inference outputs, ignored by git
+└── weights/ or *.pt        # Local model weights, ignored by git
 ```
 
----
+## Defect Classes
 
-## 🎯 检测目标
+The default configuration follows the six common NEU-DET steel surface defect classes:
 
-基于 **NEU-DET（东北大学钢铁表面缺陷数据集）**，系统可识别以下 **6 类** 常见钢铁表面缺陷：
+| ID | Class | Meaning |
+| --- | --- | --- |
+| 0 | `crazing` | Fine crack-like surface patterns |
+| 1 | `inclusion` | Non-metallic inclusion defects |
+| 2 | `patches` | Irregular surface patches |
+| 3 | `pitted_surface` | Pitting or corrosion-like marks |
+| 4 | `rolled-in_scale` | Oxide scale rolled into the surface |
+| 5 | `scratches` | Linear scratch defects |
 
-| 编号 | 英文名称 | 中文名称 | 描述 |
-|:---:|---------|---------|------|
-| 0 | Crazing | 龟裂 | 表面细小裂纹网状分布 |
-| 1 | Inclusion | 夹杂 | 金属内部异物夹杂 |
-| 2 | Patches | 斑块 | 表面不规则色斑 |
-| 3 | Pitted Surface | 麻点 | 表面点蚀坑洞 |
-| 4 | Rolled-in Scale | 氧化铁皮压入 | 轧制过程中氧化皮压入 |
-| 5 | Scratches | 划痕 | 表面线性划伤 |
+## Quick Start
 
----
+### 1. Requirements
 
-## 🚀 快速开始
+- Python 3.10 recommended
+- CPU, Apple Silicon MPS, or NVIDIA CUDA
+- Windows, Linux, or macOS
 
-### 1. 环境要求
+macOS users should start with [docs/macos.md](docs/macos.md).
 
-- **Python** 3.10 推荐
-- **设备**：CPU / Apple Silicon MPS / NVIDIA CUDA
-- **操作系统**：Windows / Linux / macOS
-
-macOS 用户请优先阅读 [docs/macos.md](docs/macos.md)。
-
-### 2. 安装依赖
+### 2. Install
 
 ```bash
-# 克隆项目
 git clone https://github.com/YfengJ/steel-defect-detection.git
 cd steel-defect-detection
 
-# 创建虚拟环境（推荐）
 python -m venv venv
+
 # Windows
 venv\Scripts\activate
+
 # Linux/macOS
 source venv/bin/activate
 
-# 安装依赖（包含 ultralytics 和 GUI 所需 ttkbootstrap）
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-请自行准备：
+Prepare these files locally:
 
-- 数据集：参考 [docs/dataset.md](docs/dataset.md)
-- 模型权重：例如官方 `yolov8n.pt`，或你自己训练得到的 `best.pt`
+- Dataset: see [docs/dataset.md](docs/dataset.md)
+- Weights: download a YOLOv8 pretrained weight such as `yolov8n.pt`, or use your own trained `best.pt`
 
-### 3. 启动 GUI 系统
+### 3. Launch the GUI
 
 ```bash
 python ui.py
 ```
 
-启动后将打开图形化操作界面，包含以下功能选项卡：
+The GUI includes tabs for image prediction, batch prediction, video inference, training, and validation.
 
-- **🖼️ 单图检测** — 选择模型和图片，一键分析
-- **📂 批量检测** — 选择模型和图片目录，批量处理
-- **📹 视频流检测** — 支持视频文件或摄像头实时检测
-- **⚙️ 模型训练** — 配置训练参数并启动训练
-- **📊 模型验证** — 验证模型性能指标
+## Command-line Usage
 
----
-
-## 📝 使用说明
-
-### 单图检测
-
-1. 在"单图检测"选项卡中，选择 `.pt` 模型文件
-2. 点击"选择图片"加载待检测图片
-3. 点击"开始分析"，右侧面板将显示检测报告
-
-### 批量检测
-
-1. 在"批量检测"选项卡中，选择模型文件和图片目录
-2. 点击"启动批量处理"
-3. 系统将自动生成：
-   - 📊 详细分析报告（缺陷数量、类别统计、置信度）
-   - 🥧 缺陷类别占比饼图
-   - 📊 置信度分布直方图
-
-### 视频流检测
-
-1. 在"视频流检测"选项卡中，选择模型
-2. 选择视频文件或点击"摄像头"使用实时画面
-3. 系统将逐帧进行缺陷检测并实时显示结果
-
-### 模型训练
+### Train
 
 ```bash
-# 命令行方式
+# CPU
 python train.py --model yolov8n.pt --data dataset.yaml --epochs 50 --batch 16 --device cpu
 
-# Apple Silicon 可尝试 MPS
+# Apple Silicon MPS
 python train.py --model yolov8n.pt --data dataset.yaml --epochs 50 --batch 8 --device mps
 
-# Windows/Linux NVIDIA GPU 可使用 CUDA
+# NVIDIA CUDA
 python train.py --model yolov8n.pt --data dataset.yaml --epochs 50 --batch 16 --device cuda
-
-# 或通过 GUI 界面操作
-python ui.py  # 切换到"模型训练"选项卡
 ```
 
-### 模型验证
+### Validate
 
 ```bash
-# 命令行方式
 python val.py --model runs/detect/train_result/weights/best.pt --data dataset.yaml
 ```
 
----
+### Predict
 
-## 🔧 数据集准备
-
-### NEU-DET 数据集
-
-本项目可使用 [NEU Surface Defect Database](http://faculty.neu.edu.cn/songkechen/zh_CN/zdylm/263270/list/) 或相同类别格式的数据集。数据集不放进仓库，请在本地准备，详细说明见 [docs/dataset.md](docs/dataset.md)。
-
+```bash
+python predict.py --model runs/detect/train_result/weights/best.pt --source path/to/image.jpg
 ```
+
+## Dataset Preparation
+
+This project can use the [NEU Surface Defect Database](http://faculty.neu.edu.cn/songkechen/zh_CN/zdylm/263270/list/) or another dataset with the same class mapping.
+
+Expected local layout:
+
+```text
 datasets/NEU-DET/
 ├── images/
-│   ├── train/    # 训练集图片
-│   ├── val/      # 验证集图片
-│   └── test/     # 测试集图片
-├── labels/
-│   ├── train/    # YOLO 格式标注 (cls x y w h)
+│   ├── train/
 │   ├── val/
 │   └── test/
-└── annotations/  # VOC XML 原始标注
+├── labels/
+│   ├── train/
+│   ├── val/
+│   └── test/
+└── annotations/
 ```
 
-### 标注格式转换
+YOLO label files should use:
 
-如果你的数据集为 VOC XML 格式，可使用内置转换工具：
+```text
+class_id x_center y_center width height
+```
+
+All coordinates must be normalized to `0.0` to `1.0`.
+
+If your annotations are VOC XML files, place them under `datasets/NEU-DET/annotations/` and run:
 
 ```bash
 python translate.py
 ```
 
-该脚本会自动将 `annotations/` 下的 XML 文件转换为 YOLO 格式的 TXT 标注文件。
+## Model Weights
 
----
+Model weights are intentionally excluded from git. Keep large artifacts locally, in cloud storage, or in GitHub Releases.
 
-## 📦 预训练模型
+Common local choices:
 
-仓库不提交模型权重。你可以自行下载 YOLOv8 官方预训练权重作为初始化模型，也可以使用自己训练得到的 `best.pt`。
+| Weight | Use case |
+| --- | --- |
+| `yolov8n.pt` | Fastest baseline for CPU or small experiments |
+| `yolov8s.pt` | Better speed/accuracy balance |
+| `yolov8m.pt` | Medium experiments when hardware allows |
+| `best.pt` | Your trained defect detector |
 
-| 模型 | 参数量 | 适用场景 |
-|------|--------|---------|
-| `yolov8n.pt` | 3.2M | 轻量级，适合边缘设备 |
-| `yolov8s.pt` | 11.2M | 小型模型，速度与精度平衡 |
-| `yolov8m.pt` | 25.9M | 中等模型，推荐通用场景 |
-| `yolov8x.pt` | 68.2M | 大型模型，追求最高精度 |
+## Dependency Updates
 
----
+Dependabot is enabled for Python dependencies and GitHub Actions. Large dependency jumps are reviewed conservatively because PyTorch, OpenCV, NumPy, and Ultralytics compatibility can be sensitive across platforms.
 
-## 🛠️ 技术栈
+## License
 
-| 组件 | 技术 |
-|------|------|
-| 深度学习框架 | PyTorch |
-| 目标检测模型 | YOLOv8 (Ultralytics v8.0.182) |
-| GUI 框架 | ttkbootstrap (基于 Tkinter) |
-| 图像处理 | OpenCV, Pillow |
-| 数据可视化 | Matplotlib |
-| 数据处理 | NumPy |
+This project is licensed under the [AGPL-3.0 License](LICENSE).
 
----
-
-## 📁 项目文件说明
-
-| 文件 | 功能说明 |
-|------|---------|
-| `ui.py` | GUI 主程序，提供完整的图形化操作界面 |
-| `train.py` | 模型训练脚本，支持命令行参数配置 |
-| `predict.py` | 推理预测脚本，支持单图与批量推理 |
-| `val.py` | 模型验证脚本，输出 mAP 等评估指标 |
-| `video_predict.py` | 视频推理处理模块，支持中文标签绘制 |
-| `translate.py` | VOC XML 到 YOLO TXT 标注格式转换工具 |
-| `dataset.yaml` | 数据集路径与类别配置文件 |
-
----
-
-## 📄 License
-
-本项目基于 [AGPL-3.0 License](LICENSE) 开源。
-
-YOLOv8 核心库来自 [Ultralytics](https://github.com/ultralytics/ultralytics)，遵循其开源协议。
-
----
-
-<p align="center">
-  <i>⭐ 如果这个项目对你有帮助，请给一个 Star！</i>
-</p>
+YOLOv8 is provided by [Ultralytics](https://github.com/ultralytics/ultralytics) and follows its upstream license terms.
