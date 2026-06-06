@@ -2,6 +2,8 @@
 
 ## v0.1.1 - Documentation and Maintenance Polish
 
+This release focuses on making the repository easier to read, clone, check, and maintain before broader feature work. It does not introduce a large refactor of the core YOLOv8 training or inference behavior.
+
 ### Current Functionality
 
 - YOLOv8-based steel surface defect detection workflow.
@@ -20,10 +22,12 @@
 
 ### Maintenance Changes
 
+- Restored real line endings for README, YAML, and project Python entrypoints so Markdown, YAML, and Python parsers can read them reliably.
 - Cleaned English and Chinese README Markdown so GitHub renders headings, badges, tables, lists, and code blocks correctly.
 - Fixed the CI workflow YAML and kept the initial check intentionally simple: install dependencies and run `python -m compileall .`.
 - Tightened Dependabot queue limits to keep dependency review manageable.
 - Added clearer command-line help text for `train.py`, `predict.py`, `val.py`, and `video_predict.py`.
+- Delayed heavy YOLO/OpenCV imports in CLI entrypoints so `--help` works before a full runtime environment is installed.
 - Applied low-risk dependency floor updates for `requests` and `tqdm`.
 
 ### Known Limitations
