@@ -1,0 +1,69 @@
+name: Bug report
+description: Report a reproducible problem in training, validation, prediction, or the GUI.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Please include enough detail for someone else to reproduce it without your private dataset.
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-checks
+      options:
+        - label: I searched existing issues and did not find the same problem.
+          required: true
+        - label: I am not uploading datasets, private images, or large model weights in this issue.
+          required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Installation
+        - Dataset
+        - Training
+        - Validation
+        - Prediction
+        - GUI
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: Paste the exact command or describe the GUI action.
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error output
+      description: Paste the full traceback or console output.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, Python version, torch version, and device info.
+      placeholder: |
+        OS:
+        Python:
+        torch:
+        device: cpu / mps / cuda
+    validations:
+      required: true
+  - type: textarea
+    id: dataset
+    attributes:
+      label: Dataset layout
+      description: Describe your folder layout and dataset.yaml paths. Do not attach the dataset.
+    validations:
+      required: false

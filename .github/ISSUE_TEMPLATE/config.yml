@@ -1,11 +1,8 @@
 blank_issues_enabled: true
 contact_links:
-  - name: 📄 Docs
-    url: https://docs.ultralytics.com/
-    about: Full Ultralytics YOLOv8 Documentation
-  - name: 💬 Forum
-    url: https://community.ultralytics.com/
-    about: Ask on Ultralytics Community Forum
-  - name: 🎧 Discord
-    url: https://ultralytics.com/discord
-    about: Ask on Ultralytics Discord
+  - name: Project README
+    url: https://github.com/YfengJ/steel-defect-detection#readme
+    about: Start here for setup, dataset, and usage links.
+  - name: Troubleshooting
+    url: https://github.com/YfengJ/steel-defect-detection/blob/main/docs/troubleshooting.md
+    about: Common installation, dataset, CUDA, and MPS issues.

@@ -1,21 +1,21 @@
-name: ❓ Question
-description: Ask a YOLOv8 question
-# title: " "
+name: Question
+description: Ask for help using this steel defect detection project.
+title: "[Question]: "
 labels: [question]
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for asking a YOLOv8 ❓ Question!
+        Please include enough context for maintainers to understand your environment and dataset layout.
 
   - type: checkboxes
     attributes:
       label: Search before asking
       description: >
-        Please search the [issues](https://github.com/ultralytics/ultralytics/issues) and [discussions](https://github.com/ultralytics/ultralytics/discussions) to see if a similar question already exists.
+        Please search this repository's issues before opening a new question.
       options:
         - label: >
-            I have searched the YOLOv8 [issues](https://github.com/ultralytics/ultralytics/issues) and [discussions](https://github.com/ultralytics/ultralytics/discussions) and found no similar questions.
+            I have searched existing issues and found no similar question.
           required: true
 
   - type: textarea
@@ -23,7 +23,7 @@ body:
       label: Question
       description: What is your question?
       placeholder: |
-        💡 ProTip! Include as much information as possible (screenshots, logs, tracebacks etc.) to receive the most helpful response.
+        Include your command, operating system, Python version, device, and any relevant error output.
     validations:
       required: true
 

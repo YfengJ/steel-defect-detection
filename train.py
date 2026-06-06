@@ -12,6 +12,12 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--batch', type=int, default=16)
     parser.add_argument('--imgsz', type=int, default=640)
+    parser.add_argument(
+        '--device',
+        type=str,
+        default=None,
+        help='训练设备，例如 cpu、mps、cuda 或 CUDA 编号 0'
+    )
     return parser.parse_args()
 
 
@@ -26,18 +32,23 @@ def main():
         print(f"• 模型: {args.model}")
         print(f"• 数据: {args.data}")
         print(f"• 轮数: {args.epochs}")
+        print(f"• 设备: {args.device or 'auto'}")
 
         model = YOLO(args.model)
 
-        results = model.train(
-            data=args.data,
-            epochs=args.epochs,
-            imgsz=args.imgsz,
-            batch=args.batch,
-            workers=2,  # Windows下如果报错，设为0
-            exist_ok=True,
-            name='train_result'
-        )
+        train_kwargs = {
+            'data': args.data,
+            'epochs': args.epochs,
+            'imgsz': args.imgsz,
+            'batch': args.batch,
+            'workers': 2,  # Windows下如果报错，设为0
+            'exist_ok': True,
+            'name': 'train_result'
+        }
+        if args.device:
+            train_kwargs['device'] = args.device
+
+        results = model.train(**train_kwargs)
 
         print("\n🎉 训练流程结束")
         print(f"💾 模型保存路径: {results.save_dir}")

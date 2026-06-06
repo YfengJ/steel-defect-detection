@@ -4,7 +4,7 @@
     <b>Steel Surface Defect Detection System Based on YOLOv8</b>
   </p>
   <p align="center">
-    <img src="https://img.shields.io/badge/Python-3.8+-blue?logo=python&logoColor=white" alt="Python">
+    <img src="https://img.shields.io/badge/Python-3.10%20recommended-blue?logo=python&logoColor=white" alt="Python">
     <img src="https://img.shields.io/badge/YOLOv8-Ultralytics-purple?logo=yolo" alt="YOLOv8">
     <img src="https://img.shields.io/badge/GUI-ttkbootstrap-green" alt="GUI">
     <img src="https://img.shields.io/badge/Dataset-NEU--DET-orange" alt="Dataset">
@@ -16,9 +16,13 @@
 
 ## 📖 项目简介
 
-本项目是一个基于 **YOLOv8** 深度学习目标检测算法的 **钢铁表面缺陷智能检测系统**，针对工业生产中钢铁表面质量检测需求，实现了从模型训练、验证到推理部署的全流程解决方案。
+本项目是一个基于 **YOLOv8** 的 **钢铁表面缺陷检测开源项目**，面向 NEU-DET 等钢铁表面缺陷数据集，覆盖模型训练、验证、图片/视频推理和 GUI 演示等基础流程。
+
+项目适合学生课程设计、深度学习/目标检测初学者，以及想了解工业视觉缺陷检测流程的学习者。当前目标不是工业生产级闭环系统，而是提供一个真实、可运行、可持续维护的 YOLOv8 学习和实验仓库。
 
 系统提供了一套 **图形化操作界面（GUI）**，支持单图检测、批量检测、实时视频流检测等多种检测模式，并能自动生成包含缺陷分类统计、置信度分布等信息的可视化分析报告。
+
+> 注意：仓库不包含 NEU-DET 数据集、训练结果、`.pt/.pth` 权重或其他大文件。请按照 [docs/dataset.md](docs/dataset.md) 自行准备数据集和模型权重。
 
 ### ✨ 核心特性
 
@@ -30,6 +34,17 @@
 | ⚙️ **模型训练** | 在 GUI 中直接配置参数并启动模型训练流程 |
 | 📊 **模型验证** | 加载训练好的模型进行数据集验证，查看 mAP 等指标 |
 | 📈 **可视化报告** | 自动统计缺陷类别占比（饼图）和置信度分布（直方图） |
+
+---
+
+## 📚 项目文档
+
+- [macOS / Apple Silicon 运行说明](docs/macos.md)
+- [数据集准备说明](docs/dataset.md)
+- [常见问题排查](docs/troubleshooting.md)
+- [Roadmap](ROADMAP.md)
+- [Support](SUPPORT.md)
+- [Security Policy](SECURITY.md)
 
 ---
 
@@ -79,14 +94,15 @@
 ├── translate.py           # 🔄 VOC XML → YOLO TXT 标注格式转换工具
 ├── dataset.yaml           # 📋 数据集配置文件
 ├── requirements.txt       # 📦 项目依赖
-├── datasets/
-│   └── NEU-DET/           # 🗂️ NEU 钢铁缺陷数据集
+├── docs/                  # 📚 项目运行和维护文档
+├── .github/               # 🤖 CI、Dependabot 和 Issue 模板
+├── datasets/              # 🗂️ 本地数据集目录（不提交）
+│   └── NEU-DET/
 │       ├── images/        #    原始图片 (train/val/test)
 │       ├── labels/        #    YOLO 格式标注
 │       └── annotations/   #    VOC XML 原始标注
-├── runs/                  # 📁 训练与推理结果输出目录
-├── ultralytics/           # 🧠 YOLOv8 核心库（Ultralytics v8.0.182）
-└── *.pt                   # 🏋️ 预训练模型权重文件
+├── runs/                  # 📁 训练与推理结果输出目录（不提交）
+└── weights/ 或 *.pt        # 🏋️ 本地模型权重（不提交）
 ```
 
 ---
@@ -110,9 +126,11 @@
 
 ### 1. 环境要求
 
-- **Python** >= 3.8
-- **CUDA**（推荐，用于 GPU 加速训练与推理）
+- **Python** 3.10 推荐
+- **设备**：CPU / Apple Silicon MPS / NVIDIA CUDA
 - **操作系统**：Windows / Linux / macOS
+
+macOS 用户请优先阅读 [docs/macos.md](docs/macos.md)。
 
 ### 2. 安装依赖
 
@@ -128,12 +146,14 @@ venv\Scripts\activate
 # Linux/macOS
 source venv/bin/activate
 
-# 安装依赖
+# 安装依赖（包含 ultralytics 和 GUI 所需 ttkbootstrap）
 pip install -r requirements.txt
-
-# 额外安装 GUI 所需库
-pip install ttkbootstrap
 ```
+
+请自行准备：
+
+- 数据集：参考 [docs/dataset.md](docs/dataset.md)
+- 模型权重：例如官方 `yolov8n.pt`，或你自己训练得到的 `best.pt`
 
 ### 3. 启动 GUI 系统
 
@@ -178,7 +198,13 @@ python ui.py
 
 ```bash
 # 命令行方式
-python train.py --model yolov8n.pt --data dataset.yaml --epochs 50 --batch 16
+python train.py --model yolov8n.pt --data dataset.yaml --epochs 50 --batch 16 --device cpu
+
+# Apple Silicon 可尝试 MPS
+python train.py --model yolov8n.pt --data dataset.yaml --epochs 50 --batch 8 --device mps
+
+# Windows/Linux NVIDIA GPU 可使用 CUDA
+python train.py --model yolov8n.pt --data dataset.yaml --epochs 50 --batch 16 --device cuda
 
 # 或通过 GUI 界面操作
 python ui.py  # 切换到"模型训练"选项卡
@@ -197,7 +223,7 @@ python val.py --model runs/detect/train_result/weights/best.pt --data dataset.ya
 
 ### NEU-DET 数据集
 
-本项目使用 [NEU Surface Defect Database](http://faculty.neu.edu.cn/songkechen/zh_CN/zdylm/263270/list/)，数据集结构如下：
+本项目可使用 [NEU Surface Defect Database](http://faculty.neu.edu.cn/songkechen/zh_CN/zdylm/263270/list/) 或相同类别格式的数据集。数据集不放进仓库，请在本地准备，详细说明见 [docs/dataset.md](docs/dataset.md)。
 
 ```
 datasets/NEU-DET/
@@ -206,7 +232,9 @@ datasets/NEU-DET/
 │   ├── val/      # 验证集图片
 │   └── test/     # 测试集图片
 ├── labels/
-│   └── train/    # YOLO 格式标注 (cls x y w h)
+│   ├── train/    # YOLO 格式标注 (cls x y w h)
+│   ├── val/
+│   └── test/
 └── annotations/  # VOC XML 原始标注
 ```
 
@@ -224,7 +252,7 @@ python translate.py
 
 ## 📦 预训练模型
 
-项目提供多种 YOLOv8 预训练权重，可根据硬件条件和精度需求选择：
+仓库不提交模型权重。你可以自行下载 YOLOv8 官方预训练权重作为初始化模型，也可以使用自己训练得到的 `best.pt`。
 
 | 模型 | 参数量 | 适用场景 |
 |------|--------|---------|
