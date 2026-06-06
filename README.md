@@ -1,19 +1,14 @@
-<p align="center">
-  <h1 align="center">Steel Surface Defect Detection with YOLOv8</h1>
-  <p align="center">
-    An open source YOLOv8 project for steel surface defect detection, training, validation, inference, and GUI demos.
-  </p>
-  <p align="center">
-    <a href="README.md">English</a> | <a href="README.zh-CN.md">简体中文</a>
-  </p>
-  <p align="center">
-    <img src="https://img.shields.io/badge/Python-3.10%20recommended-blue?logo=python&logoColor=white" alt="Python">
-    <img src="https://img.shields.io/badge/YOLOv8-Ultralytics-purple" alt="YOLOv8">
-    <img src="https://img.shields.io/badge/GUI-ttkbootstrap-green" alt="GUI">
-    <img src="https://img.shields.io/badge/Dataset-NEU--DET-orange" alt="Dataset">
-    <img src="https://img.shields.io/badge/License-AGPL--3.0-red" alt="License">
-  </p>
-</p>
+# Steel Surface Defect Detection with YOLOv8
+
+An open source YOLOv8 project for steel surface defect detection, training, validation, inference, and GUI demos.
+
+[English](README.md) | [简体中文](README.zh-CN.md)
+
+![Python](https://img.shields.io/badge/Python-3.10%20recommended-blue?logo=python&logoColor=white)
+![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-purple)
+![GUI](https://img.shields.io/badge/GUI-ttkbootstrap-green)
+![Dataset](https://img.shields.io/badge/Dataset-NEU--DET-orange)
+![License](https://img.shields.io/badge/License-AGPL--3.0-red)
 
 ---
 
@@ -216,6 +211,10 @@ Common local choices:
 ## Dependency Updates
 
 Dependabot is enabled for Python dependencies and GitHub Actions. Large dependency jumps are reviewed conservatively because PyTorch, OpenCV, NumPy, and Ultralytics compatibility can be sensitive across platforms.
+
+## Release Notes
+
+See [RELEASE_NOTES.md](RELEASE_NOTES.md) for v0.1.1 changes, known limitations, and next plans.
 
 ## License
 

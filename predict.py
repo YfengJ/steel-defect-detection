@@ -2,11 +2,10 @@ import argparse
 import sys
 from pathlib import Path
 import time
-from ultralytics import YOLO
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Run YOLOv8 prediction on an image, video, or folder.')
     parser.add_argument('--model', type=str, required=True, help='模型路径')
     parser.add_argument('--source', type=str, required=True, help='图片/视频源')
     parser.add_argument('--conf', type=float, default=0.25, help='置信度阈值')
@@ -20,6 +19,8 @@ def parse_args():
 
 def main():
     args = parse_args()
+
+    from ultralytics import YOLO
 
     # 1. 准备路径
     project_dir = Path(args.project)

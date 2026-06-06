@@ -1,8 +1,4 @@
-from ultralytics import YOLO
-import cv2
-import numpy as np
-from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
+import argparse
 
 
 class VideoPredictor:
@@ -12,6 +8,11 @@ class VideoPredictor:
         独立运行的视频预测函数
         """
         try:
+            from ultralytics import YOLO
+            import cv2
+            import numpy as np
+            from PIL import Image, ImageDraw, ImageFont
+
             model = YOLO(model_path)
 
             # 打开视频
@@ -79,10 +80,10 @@ class VideoPredictor:
 
 
 if __name__ == "__main__":
-    # 简单的测试入口
-    import sys
+    parser = argparse.ArgumentParser(description='Run YOLOv8 inference on a video file or camera source.')
+    parser.add_argument('model', help='模型权重路径，例如 runs/detect/train_result/weights/best.pt')
+    parser.add_argument('source', help='视频路径或摄像头编号，例如 0')
+    parser.add_argument('--output', default='output.mp4', help='输出视频路径')
+    args = parser.parse_args()
 
-    if len(sys.argv) > 2:
-        VideoPredictor.run(sys.argv[1], sys.argv[2])
-    else:
-        print("Usage: python video_predict.py <model.pt> <video.mp4>")
+    VideoPredictor.run(args.model, args.source, args.output)

@@ -1,19 +1,21 @@
 import argparse
 import sys
-from ultralytics import YOLO
-import torch.multiprocessing
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, required=True)
+    parser = argparse.ArgumentParser(description='Validate a trained YOLOv8 steel defect detection model.')
+    parser.add_argument('--model', type=str, required=True, help='模型权重路径')
     parser.add_argument('--data', type=str, default=None, help='可选，覆盖模型中的data配置')
     return parser.parse_args()
 
 
 def main():
-    torch.multiprocessing.freeze_support()
     args = parse_args()
+
+    from ultralytics import YOLO
+    import torch.multiprocessing
+
+    torch.multiprocessing.freeze_support()
 
     try:
         print(f"🔍 正在加载模型: {args.model}")

@@ -1,19 +1,14 @@
-<p align="center">
-  <h1 align="center">基于 YOLOv8 的钢铁表面缺陷检测</h1>
-  <p align="center">
-    一个面向训练、验证、推理和 GUI 演示的 YOLOv8 钢铁表面缺陷检测开源项目。
-  </p>
-  <p align="center">
-    <a href="README.md">English</a> | <a href="README.zh-CN.md">简体中文</a>
-  </p>
-  <p align="center">
-    <img src="https://img.shields.io/badge/Python-3.10%20recommended-blue?logo=python&logoColor=white" alt="Python">
-    <img src="https://img.shields.io/badge/YOLOv8-Ultralytics-purple" alt="YOLOv8">
-    <img src="https://img.shields.io/badge/GUI-ttkbootstrap-green" alt="GUI">
-    <img src="https://img.shields.io/badge/Dataset-NEU--DET-orange" alt="Dataset">
-    <img src="https://img.shields.io/badge/License-AGPL--3.0-red" alt="License">
-  </p>
-</p>
+# 基于 YOLOv8 的钢铁表面缺陷检测
+
+一个面向训练、验证、推理和 GUI 演示的 YOLOv8 钢铁表面缺陷检测开源项目。
+
+[English](README.md) | [简体中文](README.zh-CN.md)
+
+![Python](https://img.shields.io/badge/Python-3.10%20recommended-blue?logo=python&logoColor=white)
+![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-purple)
+![GUI](https://img.shields.io/badge/GUI-ttkbootstrap-green)
+![Dataset](https://img.shields.io/badge/Dataset-NEU--DET-orange)
+![License](https://img.shields.io/badge/License-AGPL--3.0-red)
 
 ---
 
@@ -214,6 +209,10 @@ python translate.py
 ## 依赖更新
 
 仓库已启用 Dependabot，用于 Python 依赖和 GitHub Actions 更新。由于 PyTorch、OpenCV、NumPy 和 Ultralytics 的跨平台兼容性比较敏感，大版本依赖更新会保守处理。
+
+## Release Notes
+
+v0.1.1 的更新内容、已知限制和后续计划请查看 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
 ## License
 

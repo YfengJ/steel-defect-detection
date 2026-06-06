@@ -1,17 +1,15 @@
 import argparse
 import sys
 import os
-from ultralytics import YOLO
-import torch.multiprocessing
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Train a YOLOv8 steel surface defect detector.')
     parser.add_argument('--model', type=str, default='yolov8n.pt', help='预训练模型')
     parser.add_argument('--data', type=str, required=True, help='数据集YAML路径')
-    parser.add_argument('--epochs', type=int, default=50)
-    parser.add_argument('--batch', type=int, default=16)
-    parser.add_argument('--imgsz', type=int, default=640)
+    parser.add_argument('--epochs', type=int, default=50, help='训练轮数')
+    parser.add_argument('--batch', type=int, default=16, help='批大小')
+    parser.add_argument('--imgsz', type=int, default=640, help='训练图片尺寸')
     parser.add_argument(
         '--device',
         type=str,
@@ -22,10 +20,13 @@ def parse_args():
 
 
 def main():
+    args = parse_args()
+
+    from ultralytics import YOLO
+    import torch.multiprocessing
+
     # Windows 下多进程保护
     torch.multiprocessing.freeze_support()
-
-    args = parse_args()
 
     try:
         print(f"🚀 初始化训练...")
