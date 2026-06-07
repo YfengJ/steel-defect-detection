@@ -44,6 +44,24 @@ PY
 
 If `mps available` is `False`, use `--device cpu`.
 
+## Local MPS Smoke Check
+
+The following local smoke check was run on Apple Silicon (`arm64`) on
+2026-06-07 using a temporary virtual environment:
+
+```text
+python: 3.11.15
+torch: 2.12.0
+mps built: True
+mps available: True
+mps tensor smoke: [[2.0, 2.0], [2.0, 2.0]]
+```
+
+This confirms the PyTorch MPS backend can execute a simple tensor operation on
+this machine. It is not a full YOLO training or inference benchmark. Full
+project validation still requires local dataset files and model weights, which
+are intentionally not committed to this repository.
+
 ## Prepare Dataset and Weights
 
 The repository does not include NEU-DET images, labels, or trained model weights. See [dataset.md](dataset.md) for the expected layout.
