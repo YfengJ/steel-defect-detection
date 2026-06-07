@@ -14,11 +14,28 @@ An open source YOLOv8 project for steel surface defect detection, training, vali
 
 ## Overview
 
-This repository is a learning-oriented steel surface defect detection project built on **YOLOv8**. It targets NEU-DET style steel defect datasets and provides a practical workflow for model training, validation, image inference, video inference, and a desktop GUI demo.
+This repository is a learning-oriented steel surface defect detection project
+built on **YOLOv8**. It targets NEU-DET style steel defect datasets and
+provides a practical workflow for model training, validation, image inference,
+video inference, and a desktop GUI demo.
 
-It is designed for students, computer vision beginners, and industrial vision learners who want a real, runnable, and maintainable open source project rather than an unmaintained collection of scripts.
+It is designed for students, computer vision beginners, and industrial vision
+learners who want a real, runnable, and maintainable open source project rather
+than an unmaintained collection of scripts.
 
-> Datasets, training outputs, and model weights are not included in this repository. Prepare them locally by following [docs/dataset.md](docs/dataset.md).
+> Datasets, training outputs, and model weights are not included in this
+> repository. Prepare them locally by following [docs/dataset.md](docs/dataset.md).
+
+## Current Status
+
+- Current version: `v0.1.1`.
+- Basic CI syntax checks are enabled with `python -m compileall .`.
+- Documentation exists for macOS, dataset preparation, troubleshooting, support,
+  security, and the roadmap.
+- Datasets and model weights are not included in the repository; users should
+  prepare them locally.
+- Planned next steps include lightweight smoke tests, a sample workflow, a model
+  card template, and clearer GUI error messages.
 
 ## Features
 
@@ -164,7 +181,8 @@ python predict.py --model runs/detect/train_result/weights/best.pt --source path
 
 ## Dataset Preparation
 
-This project can use the [NEU Surface Defect Database](http://faculty.neu.edu.cn/songkechen/zh_CN/zdylm/263270/list/) or another dataset with the same class mapping.
+This project can use the [NEU Surface Defect Database](http://faculty.neu.edu.cn/songkechen/zh_CN/zdylm/263270/list/)
+or another dataset with the same class mapping.
 
 Expected local layout:
 
@@ -197,7 +215,8 @@ python translate.py
 
 ## Model Weights
 
-Model weights are intentionally excluded from git. Keep large artifacts locally, in cloud storage, or in GitHub Releases.
+Model weights are intentionally excluded from git. Keep large artifacts locally,
+in cloud storage, or in GitHub Releases.
 
 Common local choices:
 
@@ -210,7 +229,9 @@ Common local choices:
 
 ## Dependency Updates
 
-Dependabot is enabled for Python dependencies and GitHub Actions. Large dependency jumps are reviewed conservatively because PyTorch, OpenCV, NumPy, and Ultralytics compatibility can be sensitive across platforms.
+Dependabot is enabled for Python dependencies and GitHub Actions. Large
+dependency jumps are reviewed conservatively because PyTorch, OpenCV, NumPy, and
+Ultralytics compatibility can be sensitive across platforms.
 
 ## Release Notes
 

@@ -14,11 +14,22 @@
 
 ## 项目简介
 
-本项目是一个基于 **YOLOv8** 的 **钢铁表面缺陷检测开源项目**，面向 NEU-DET 等钢铁表面缺陷数据集，覆盖模型训练、验证、图片/视频推理和 GUI 演示等基础流程。
+本项目是一个基于 **YOLOv8** 的 **钢铁表面缺陷检测开源项目**，面向 NEU-DET
+等钢铁表面缺陷数据集，覆盖模型训练、验证、图片/视频推理和 GUI 演示等基础流程。
 
-项目适合学生课程设计、深度学习和目标检测初学者，以及想了解工业视觉缺陷检测流程的学习者。当前目标不是工业生产级闭环系统，而是提供一个真实、可运行、可持续维护的 YOLOv8 学习和实验仓库。
+项目适合学生课程设计、深度学习和目标检测初学者，以及想了解工业视觉缺陷检测流程的学习者。
+当前目标不是工业生产级闭环系统，而是提供一个真实、可运行、可持续维护的 YOLOv8 学习和实验仓库。
 
-> 仓库不包含 NEU-DET 数据集、训练结果、`.pt/.pth` 权重或其他大文件。请按照 [docs/dataset.md](docs/dataset.md) 自行准备数据集和模型权重。
+> 仓库不包含 NEU-DET 数据集、训练结果、`.pt/.pth` 权重或其他大文件。
+> 请按照 [docs/dataset.md](docs/dataset.md) 自行准备数据集和模型权重。
+
+## 当前状态
+
+- 当前版本：`v0.1.1`。
+- 已启用基础 CI 语法检查，执行 `python -m compileall .`。
+- 已有 macOS、数据集、故障排查、支持、安全和路线图文档。
+- 数据集和模型权重不包含在仓库中，需要用户在本地自行准备。
+- 后续计划包括轻量 smoke tests、sample workflow、model card 和 GUI 错误提示优化。
 
 ## 核心功能
 
@@ -164,7 +175,8 @@ python predict.py --model runs/detect/train_result/weights/best.pt --source path
 
 ## 数据集准备
 
-本项目可使用 [NEU Surface Defect Database](http://faculty.neu.edu.cn/songkechen/zh_CN/zdylm/263270/list/) 或相同类别格式的数据集。
+本项目可使用 [NEU Surface Defect Database](http://faculty.neu.edu.cn/songkechen/zh_CN/zdylm/263270/list/)
+或相同类别格式的数据集。
 
 推荐本地结构：
 
@@ -208,7 +220,8 @@ python translate.py
 
 ## 依赖更新
 
-仓库已启用 Dependabot，用于 Python 依赖和 GitHub Actions 更新。由于 PyTorch、OpenCV、NumPy 和 Ultralytics 的跨平台兼容性比较敏感，大版本依赖更新会保守处理。
+仓库已启用 Dependabot，用于 Python 依赖和 GitHub Actions 更新。由于 PyTorch、OpenCV、
+NumPy 和 Ultralytics 的跨平台兼容性比较敏感，大版本依赖更新会保守处理。
 
 ## Release Notes
 
