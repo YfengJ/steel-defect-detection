@@ -30,3 +30,6 @@ jobs:
 
       - name: Compile Python files
         run: python -m compileall .
+
+      - name: Run lightweight CLI smoke tests
+        run: python scripts/check_cli_help.py
