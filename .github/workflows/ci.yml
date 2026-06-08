@@ -25,5 +25,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Check repository hygiene
+        run: python scripts/check_repository_hygiene.py
+
       - name: Compile Python files
         run: python -m compileall .

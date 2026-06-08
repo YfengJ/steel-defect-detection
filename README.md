@@ -29,7 +29,7 @@ than an unmaintained collection of scripts.
 ## Current Status
 
 - Current version: `v0.1.1`.
-- Basic CI syntax checks are enabled with `python -m compileall .`.
+- Basic CI syntax and repository hygiene checks are enabled.
 - Documentation exists for macOS, dataset preparation, troubleshooting, support,
   security, and the roadmap.
 - Datasets and model weights are not included in the repository; users should

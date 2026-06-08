@@ -1,0 +1,19 @@
+* text=auto eol=lf
+
+*.gif binary
+*.jpeg binary
+*.jpg binary
+*.mp4 binary
+*.png binary
+
+*.engine binary
+*.h5 binary
+*.mlmodel binary
+*.mlpackage binary
+*.onnx binary
+*.pb binary
+*.pt binary
+*.pth binary
+*.tflite binary
+*.torchscript binary
+*.weights binary

@@ -26,7 +26,7 @@
 ## 当前状态
 
 - 当前版本：`v0.1.1`。
-- 已启用基础 CI 语法检查，执行 `python -m compileall .`。
+- 已启用基础 CI 语法检查和仓库卫生检查。
 - 已有 macOS、数据集、故障排查、支持、安全和路线图文档。
 - 数据集和模型权重不包含在仓库中，需要用户在本地自行准备。
 - 后续计划包括轻量 smoke tests、sample workflow、model card 和 GUI 错误提示优化。

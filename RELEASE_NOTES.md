@@ -43,8 +43,8 @@ the core YOLOv8 training or inference behavior.
 
 - The repository does not include datasets, trained model weights, or generated
   `runs/` outputs.
-- CI currently performs syntax compilation only; full training, validation, and
-  GUI smoke tests are still manual.
+- CI currently performs repository hygiene checks and syntax compilation; full
+  training, validation, and GUI smoke tests are still manual.
 - Apple Silicon MPS behavior depends on the local PyTorch build, macOS version,
   and available operators.
 - Major dependency upgrades for PyTorch/TorchVision, OpenCV, NumPy, SciPy,
