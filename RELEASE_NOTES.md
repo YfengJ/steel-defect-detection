@@ -43,8 +43,9 @@ the core YOLOv8 training or inference behavior.
 
 - The repository does not include datasets, trained model weights, or generated
   `runs/` outputs.
-- CI currently performs repository hygiene checks and syntax compilation; full
-  training, validation, and GUI smoke tests are still manual.
+- CI currently performs repository hygiene checks, lightweight CLI smoke tests,
+  and syntax compilation; full training, validation, and GUI smoke tests are
+  still manual.
 - Apple Silicon MPS behavior depends on the local PyTorch build, macOS version,
   and available operators.
 - Major dependency upgrades for PyTorch/TorchVision, OpenCV, NumPy, SciPy,
@@ -55,8 +56,7 @@ the core YOLOv8 training or inference behavior.
 
 ### Next Plans
 
-- Add lightweight CLI smoke tests that can run without downloading datasets or
-  model weights.
+- Expand lightweight CLI smoke tests beyond help output and argument parsing.
 - Document a small sample-data workflow for first-time users.
 - Add a model card template for trained steel defect detection weights.
 - Improve GUI error messages for missing datasets, missing weights, and unsupported devices.

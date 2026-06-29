@@ -34,8 +34,9 @@ than an unmaintained collection of scripts.
   security, and the roadmap.
 - Datasets and model weights are not included in the repository; users should
   prepare them locally.
-- Planned next steps include lightweight smoke tests, a sample workflow, a model
-  card template, and clearer GUI error messages.
+- Lightweight CLI smoke tests are enabled for the main command-line entrypoints.
+- Planned next steps include a sample workflow, a model card template, and
+  clearer GUI error messages.
 
 ## Features
 

@@ -19,7 +19,8 @@ learning-oriented open source project maintained in spare time.
 ## v0.2.0 - Reproducible Training Workflow
 
 - Provide a small sample `dataset.yaml` and clearer dataset layout checks.
-- Add lightweight smoke tests for CLI argument parsing and dataset path validation.
+- Expand lightweight smoke tests beyond CLI help output to cover argument
+  parsing and dataset path validation.
 - Document recommended training presets for CPU, Apple Silicon MPS, and CUDA.
 - Add example commands for prediction, validation, and batch inference.
 - Improve generated output naming so repeated experiments are easier to compare.
