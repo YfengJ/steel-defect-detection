@@ -39,7 +39,7 @@ seaborn>=0.11.0
 # Extras --------------------------------------
 psutil  # system utilization
 py-cpuinfo  # display CPU info
-ttkbootstrap>=1.10.1  # GUI theme widgets
+ttkbootstrap>=1.20.4  # GUI theme widgets
 # thop>=0.1.1  # FLOPs computation
 # ipython  # interactive notebook
 # albumentations>=1.0.3  # training augmentations
