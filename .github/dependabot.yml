@@ -12,6 +12,17 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    # Heavy ML/runtime packages are reviewed manually because compatibility
+    # testing can vary across CPU, CUDA, and Apple Silicon environments.
+    ignore:
+      - dependency-name: torch
+      - dependency-name: torchvision
+      - dependency-name: opencv-python
+      - dependency-name: ultralytics
+      - dependency-name: numpy
+      - dependency-name: scipy
+      - dependency-name: pandas
+      - dependency-name: pillow
 
   - package-ecosystem: github-actions
     directory: "/"
