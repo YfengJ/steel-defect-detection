@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import yaml
+
 MAX_TRACKED_FILE_BYTES = 20 * 1024 * 1024
 
 BANNED_DIRS = {"datasets", "runs", "weights", "wandb"}
@@ -64,11 +66,30 @@ def is_text_like(path: Path) -> bool:
     return path.suffix.lower() in TEXT_SUFFIXES or path.name in TEXT_FILENAMES
 
 
+def github_yaml_files(paths: list[Path]) -> list[Path]:
+    return [
+        path for path in paths
+        if path.parts and path.parts[0] == ".github" and path.suffix.lower() in {".yaml", ".yml"}
+    ]
+
+
+def validate_github_yaml(repo_root: Path, paths: list[Path]) -> list[str]:
+    failures: list[str] = []
+    for relative_path in github_yaml_files(paths):
+        path = repo_root / relative_path
+        try:
+            yaml.safe_load(path.read_text(encoding="utf-8"))
+        except yaml.YAMLError as exc:
+            failures.append(f"GitHub YAML syntax error in {relative_path}: {exc}")
+    return failures
+
+
 def main() -> int:
     repo_root = Path(run_git(["rev-parse", "--show-toplevel"]).decode().strip())
     failures: list[str] = []
+    files = tracked_files()
 
-    for relative_path in tracked_files():
+    for relative_path in files:
         path = repo_root / relative_path
         parts = set(relative_path.parts)
         suffix = relative_path.suffix.lower()
@@ -90,6 +111,8 @@ def main() -> int:
                 data = path.read_bytes()
                 if b"\r\n" in data or b"\r" in data:
                     failures.append(f"Text file contains CR line endings: {relative_path}")
+
+    failures.extend(validate_github_yaml(repo_root, files))
 
     if failures:
         print("Repository hygiene check failed:")
