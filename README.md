@@ -30,13 +30,13 @@ than an unmaintained collection of scripts.
 
 - Current version: `v0.1.1`.
 - Basic CI syntax and repository hygiene checks are enabled.
-- Documentation exists for macOS, dataset preparation, troubleshooting, support,
-  security, and the roadmap.
+- Documentation exists for macOS, dataset preparation, model cards,
+  troubleshooting, support, security, and the roadmap.
 - Datasets and model weights are not included in the repository; users should
   prepare them locally.
 - Lightweight CLI smoke tests are enabled for the main command-line entrypoints.
-- Planned next steps include a sample workflow, a model card template, and
-  clearer GUI error messages.
+- A model card template is available for future trained weights.
+- Planned next steps include a sample workflow and clearer GUI error messages.
 
 ## Features
 
@@ -53,6 +53,7 @@ than an unmaintained collection of scripts.
 
 - [macOS and Apple Silicon guide](docs/macos.md)
 - [Dataset preparation](docs/dataset.md)
+- [Model card template](docs/model_card.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Roadmap](ROADMAP.md)
 - [Support](SUPPORT.md)

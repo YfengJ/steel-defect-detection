@@ -38,6 +38,7 @@ the core YOLOv8 training or inference behavior.
 - Delayed heavy YOLO/OpenCV imports in CLI entrypoints so `--help` works before
   a full runtime environment is installed.
 - Applied low-risk dependency floor updates for `requests` and `tqdm`.
+- Added a model card template for future trained steel defect detection weights.
 
 ### Known Limitations
 
@@ -58,6 +59,5 @@ the core YOLOv8 training or inference behavior.
 
 - Expand lightweight CLI smoke tests beyond help output and argument parsing.
 - Document a small sample-data workflow for first-time users.
-- Add a model card template for trained steel defect detection weights.
 - Improve GUI error messages for missing datasets, missing weights, and unsupported devices.
 - Continue reviewing dependency updates conservatively across Windows, Linux, and macOS.

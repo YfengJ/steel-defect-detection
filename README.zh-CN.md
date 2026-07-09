@@ -27,10 +27,11 @@
 
 - 当前版本：`v0.1.1`。
 - 已启用基础 CI 语法检查和仓库卫生检查。
-- 已有 macOS、数据集、故障排查、支持、安全和路线图文档。
+- 已有 macOS、数据集、模型卡、故障排查、支持、安全和路线图文档。
 - 数据集和模型权重不包含在仓库中，需要用户在本地自行准备。
 - 已为主要命令行入口启用轻量 smoke tests。
-- 后续计划包括 sample workflow、model card 和 GUI 错误提示优化。
+- 已提供面向未来训练权重发布的模型卡模板。
+- 后续计划包括 sample workflow 和 GUI 错误提示优化。
 
 ## 核心功能
 
@@ -47,6 +48,7 @@
 
 - [macOS / Apple Silicon 运行说明](docs/macos.md)
 - [数据集准备说明](docs/dataset.md)
+- [模型卡模板](docs/model_card.md)
 - [常见问题排查](docs/troubleshooting.md)
 - [Roadmap](ROADMAP.md)
 - [Support](SUPPORT.md)

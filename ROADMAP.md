@@ -29,7 +29,7 @@ learning-oriented open source project maintained in spare time.
 
 - Add a minimal demo dataset or scripted sample download that does not commit
   dataset files.
-- Add model card documentation for any released trained weights.
+- Use the model card template for any released trained weights.
 - Add screenshots or short demo media generated from public sample images.
 - Add a release checklist covering CI, docs, dataset instructions, and weight
   publishing.
