@@ -39,7 +39,8 @@ class VideoPredictor:
 
             while cap.isOpened():
                 ret, frame = cap.read()
-                if not ret: break
+                if not ret:
+                    break
 
                 # 推理
                 results = model(frame, conf=0.25, verbose=False)

@@ -32,6 +32,14 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PIL import Image, ImageTk, ImageOps, ImageDraw, ImageFont
 
+from path_validation import (
+    validate_dataset_config,
+    validate_directory_source,
+    validate_file_source,
+    validate_model_path,
+    validate_video_source,
+)
+
 # 引入YOLO
 from ultralytics import YOLO
 
@@ -621,6 +629,11 @@ class YOLOv8_GUI:
             self.log_text.config(state='disabled')
         self.master.after(100, self.process_log_queue)
 
+    def show_validation_error(self, message):
+        """Show an actionable local setup error without starting background work."""
+        self.log(message, "WARNING")
+        Messagebox.show_error(message, "本地文件未就绪")
+
     def browse_file(self, variable):
         path = filedialog.askopenfilename()
         if path: variable.set(path)
@@ -667,9 +680,13 @@ class YOLOv8_GUI:
 
     # --- 训练逻辑 ---
     def start_training(self):
-        if not self.train_model.get() or not self.train_data.get():
-            Messagebox.show_error("请填写模型和数据集路径", "参数错误")
-            return
+        for message in (
+            validate_model_path(self.train_model.get()),
+            validate_dataset_config(self.train_data.get()),
+        ):
+            if message:
+                self.show_validation_error(message)
+                return
         self.train_gauge.pack(fill=X, pady=10)
         self.train_gauge.start()
         self.update_status("🔥 训练进行中...", "danger")
@@ -692,12 +709,13 @@ class YOLOv8_GUI:
 
     # --- 验证逻辑 ---
     def start_validation(self):
-        if not self.val_model.get():
-            Messagebox.show_warning("请选择模型文件 (.pt)")
-            return
-        if not self.val_data.get():
-            Messagebox.show_warning("请选择数据集配置文件 (.yaml)")
-            return
+        for message in (
+            validate_model_path(self.val_model.get()),
+            validate_dataset_config(self.val_data.get()),
+        ):
+            if message:
+                self.show_validation_error(message)
+                return
 
         self.val_text.delete(1.0, tk.END)
         self.val_text.insert(tk.END, "⏳ 正在初始化验证进程...\n\n")
@@ -751,9 +769,13 @@ class YOLOv8_GUI:
             self.log(f"显示图片错误: {e}", "ERROR")
 
     def start_prediction(self):
-        if not self.predict_model.get() or not self.predict_source.get():
-            Messagebox.show_error("请选择模型和图片")
-            return
+        for message in (
+            validate_model_path(self.predict_model.get()),
+            validate_file_source(self.predict_source.get(), "待检测图片"),
+        ):
+            if message:
+                self.show_validation_error(message)
+                return
         self.update_status("🔮 检测进行中...", "info")
         exp_name = f"single_{datetime.now().strftime('%H%M%S')}"
         cmd = [sys.executable, "predict.py",
@@ -798,9 +820,13 @@ class YOLOv8_GUI:
 
     # --- 批量预测逻辑 ---
     def start_batch_prediction(self):
-        if not self.batch_model.get() or not self.batch_data.get():
-            Messagebox.show_error("请完善信息")
-            return
+        for message in (
+            validate_model_path(self.batch_model.get()),
+            validate_directory_source(self.batch_data.get(), "待检测图片目录"),
+        ):
+            if message:
+                self.show_validation_error(message)
+                return
         self.update_status("🚀 批量处理进行中...", "info")
         exp_name = f"batch_{datetime.now().strftime('%H%M%S')}"
         cmd = [sys.executable, "predict.py",
@@ -938,9 +964,13 @@ class YOLOv8_GUI:
         self.run_video_inference(source="0")
 
     def run_video_inference(self, source):
-        if not self.video_model.get():
-            Messagebox.show_error("请选择模型")
-            return
+        for message in (
+            validate_model_path(self.video_model.get()),
+            validate_video_source(source),
+        ):
+            if message:
+                self.show_validation_error(message)
+                return
         self.video_loop_running = True
         self.video_status.config(text="🔥 正在推理中...", bootstyle="danger")
         self.update_status("📹 视频推理进行中...", "danger")

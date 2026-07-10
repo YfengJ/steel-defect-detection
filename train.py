@@ -1,6 +1,5 @@
 import argparse
 import sys
-import os
 
 
 def parse_args():
@@ -29,7 +28,7 @@ def main():
     torch.multiprocessing.freeze_support()
 
     try:
-        print(f"🚀 初始化训练...")
+        print("🚀 初始化训练...")
         print(f"• 模型: {args.model}")
         print(f"• 数据: {args.data}")
         print(f"• 轮数: {args.epochs}")

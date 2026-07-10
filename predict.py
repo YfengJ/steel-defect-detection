@@ -11,6 +11,11 @@ def parse_args():
     parser.add_argument('--conf', type=float, default=0.25, help='置信度阈值')
     parser.add_argument('--project', type=str, default='runs/detect', help='保存根目录')
     parser.add_argument('--name', type=str, default='exp', help='实验名称')
+    parser.add_argument(
+        '--device',
+        default=None,
+        help='推理设备，例如 cpu、mps、cuda 或 CUDA 编号 0',
+    )
     # 兼容性参数（虽然YOLOv8默认有，但显式声明防止报错）
     parser.add_argument('--save', action='store_true', help='保存图片')
     parser.add_argument('--save_txt', action='store_true', help='保存标签')
@@ -36,17 +41,21 @@ def main():
         print(f"🖼️正在处理: {args.source}")
         start_t = time.time()
 
-        results = model.predict(
-            source=args.source,
-            project=args.project,
-            name=args.name,
-            conf=args.conf,
-            save=True,  # 强制保存图片
-            save_txt=True,  # 强制保存TXT（UI生成报告需要）
-            save_conf=True,  # 强制保存置信度（UI生成图表需要）
-            exist_ok=True,  # 允许覆盖
-            verbose=False  # 减少控制台刷屏
-        )
+        predict_kwargs = {
+            'source': args.source,
+            'project': args.project,
+            'name': args.name,
+            'conf': args.conf,
+            'save': True,  # 强制保存图片
+            'save_txt': True,  # 强制保存TXT（UI生成报告需要）
+            'save_conf': True,  # 强制保存置信度（UI生成图表需要）
+            'exist_ok': True,  # 允许覆盖
+            'verbose': False,  # 减少控制台刷屏
+        }
+        if args.device:
+            predict_kwargs['device'] = args.device
+
+        model.predict(**predict_kwargs)
 
         end_t = time.time()
         print(f"✅ 预测完成，耗时 {end_t - start_t:.2f}s")

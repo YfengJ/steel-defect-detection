@@ -77,6 +77,8 @@ def validate_github_yaml(repo_root: Path, paths: list[Path]) -> list[str]:
     failures: list[str] = []
     for relative_path in github_yaml_files(paths):
         path = repo_root / relative_path
+        if not path.is_file():
+            continue
         try:
             yaml.safe_load(path.read_text(encoding="utf-8"))
         except yaml.YAMLError as exc:
