@@ -37,6 +37,10 @@ def test_predict_help() -> None:
     assert_help_succeeds("predict.py", "--source")
 
 
+def test_predict_device_help() -> None:
+    assert_help_succeeds("predict.py", "--device")
+
+
 def test_val_help() -> None:
     assert_help_succeeds("val.py", "--model")
 
