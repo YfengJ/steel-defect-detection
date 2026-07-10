@@ -12,7 +12,7 @@ scipy>=1.4.1
 # Ultralytics 8.0.182 relies on the pre-2.6 torch.load default for trusted .pt files.
 torch>=1.8.0,<2.6.0
 torchvision>=0.9.0,<0.21.0
-tqdm>=4.68.3
+tqdm>=4.68.4
 # Ultralytics 8.0.182 is vendored under ultralytics/ for reproducible behavior.
 # Do not install a second, potentially incompatible PyPI copy.
 
