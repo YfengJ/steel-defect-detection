@@ -48,6 +48,7 @@ jobs:
           python -m pytest
           tests/test_repository_hygiene.py
           tests/test_path_validation.py
+          tests/test_dependency_contracts.py
           -q
 
       - name: Run CLI smoke tests
