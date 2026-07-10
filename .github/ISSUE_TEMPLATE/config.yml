@@ -1,4 +1,4 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
   - name: Project README
     url: https://github.com/YfengJ/steel-defect-detection#readme
@@ -6,3 +6,6 @@ contact_links:
   - name: Troubleshooting
     url: https://github.com/YfengJ/steel-defect-detection/blob/main/docs/troubleshooting.md
     about: Common installation, dataset, CUDA, and MPS issues.
+  - name: Security report
+    url: https://github.com/YfengJ/steel-defect-detection/security/advisories/new
+    about: Report a vulnerability privately. Do not disclose sensitive details in a public issue.

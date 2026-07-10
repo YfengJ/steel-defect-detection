@@ -25,13 +25,13 @@
 
 ## 当前状态
 
-- 当前版本：`v0.1.1`。
-- 已启用基础 CI 语法检查和仓库卫生检查。
-- 已有 macOS、数据集、模型卡、故障排查、支持、安全和路线图文档。
+- 当前版本：`v0.1.2`。
+- CI 使用 Python 3.10 执行 Ruff 检查、单元测试、CLI smoke tests、仓库卫生检查和 Python 编译。
+- 已有 macOS、数据集、模型卡、示例推理、故障排查、支持、安全和路线图文档。
 - 数据集和模型权重不包含在仓库中，需要用户在本地自行准备。
-- 已为主要命令行入口启用轻量 smoke tests。
-- 已提供面向未来训练权重发布的模型卡模板。
-- 后续计划包括 sample workflow 和 GUI 错误提示优化。
+- GUI 会在启动任务前检查模型、数据集、图片、目录和视频路径。
+- Apple Silicon MPS 已使用 PyTorch 2.5.1 完成张量运算和一次临时图片推理实测。
+- v0.2.0 将重点完善可复现训练参数、运行时 smoke tests 和实验输出管理。
 
 ## 核心功能
 
@@ -43,14 +43,18 @@
 | 模型训练 | 通过命令行或 GUI 训练 YOLOv8 模型。 |
 | 模型验证 | 评估训练权重并查看 mAP 等指标。 |
 | GUI 演示 | 使用 `ttkbootstrap` 桌面界面完成常见流程。 |
+| 设备选择 | CLI 推理可选择 CPU、Apple Silicon MPS 或 NVIDIA CUDA。 |
 
 ## 项目文档
 
 - [macOS / Apple Silicon 运行说明](docs/macos.md)
+- [使用本地文件完成示例推理](docs/sample_inference.md)
 - [数据集准备说明](docs/dataset.md)
 - [模型卡模板](docs/model_card.md)
 - [常见问题排查](docs/troubleshooting.md)
 - [Roadmap](ROADMAP.md)
+- [贡献指南](CONTRIBUTING.md)
+- [社区行为准则](CODE_OF_CONDUCT.md)
 - [Support](SUPPORT.md)
 - [Security Policy](SECURITY.md)
 
@@ -86,8 +90,10 @@ steel-defect-detection/
 ├── val.py                 # 验证入口
 ├── video_predict.py       # 视频推理模块
 ├── translate.py           # VOC XML 转 YOLO TXT 工具
+├── path_validation.py     # 不依赖深度学习运行时的 GUI 路径检查
 ├── dataset.yaml           # 数据集配置
 ├── requirements.txt       # Python 依赖
+├── requirements-dev.txt   # 轻量代码检查和测试依赖
 ├── docs/                  # 项目运行和维护文档
 ├── .github/               # CI、Dependabot 和 Issue 模板
 ├── datasets/              # 本地数据集目录，不提交
@@ -141,6 +147,9 @@ python -m pip install -r requirements.txt
 - 数据集：参考 [docs/dataset.md](docs/dataset.md)
 - 模型权重：例如官方 `yolov8n.pt`，或自己训练得到的 `best.pt`
 
+如果想先用自己的本地图片和可信权重完成一次不依赖数据集的运行，请参考
+[docs/sample_inference.md](docs/sample_inference.md)。
+
 ### 3. 启动 GUI
 
 ```bash
@@ -173,7 +182,10 @@ python val.py --model runs/detect/train_result/weights/best.pt --data dataset.ya
 ### 预测
 
 ```bash
-python predict.py --model runs/detect/train_result/weights/best.pt --source path/to/image.jpg
+python predict.py \
+  --model runs/detect/train_result/weights/best.pt \
+  --source path/to/image.jpg \
+  --device cpu
 ```
 
 ## 数据集准备
@@ -214,6 +226,8 @@ python translate.py
 
 模型权重不会提交到 git。大文件请保存在本地、云存储或 GitHub Releases。
 
+只加载来源可信的模型权重。PyTorch checkpoint 可能包含序列化的 Python 对象。
+
 | 权重 | 适用场景 |
 | --- | --- |
 | `yolov8n.pt` | CPU 或小实验的快速基线 |
@@ -224,11 +238,13 @@ python translate.py
 ## 依赖更新
 
 仓库已启用 Dependabot，用于 Python 依赖和 GitHub Actions 更新。由于 PyTorch、OpenCV、
-NumPy 和 Ultralytics 的跨平台兼容性比较敏感，大版本依赖更新会保守处理。
+NumPy 和 Ultralytics 的跨平台兼容性比较敏感，大版本依赖更新会保守处理。本仓库内置
+Ultralytics `8.0.182` 源码；由于更高版本的 `torch.load` 默认行为与该版本权重加载器不兼容，
+PyTorch 当前限制在 `2.6` 以下。
 
 ## Release Notes
 
-v0.1.1 的更新内容、已知限制和后续计划请查看 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
+v0.1.2 的更新内容、已知限制和后续计划请查看 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
 ## License
 

@@ -28,15 +28,19 @@ than an unmaintained collection of scripts.
 
 ## Current Status
 
-- Current version: `v0.1.1`.
-- Basic CI syntax and repository hygiene checks are enabled.
+- Current version: `v0.1.2`.
+- CI runs focused Ruff checks, unit tests, CLI smoke tests, repository hygiene,
+  and Python compilation on Python 3.10.
 - Documentation exists for macOS, dataset preparation, model cards,
-  troubleshooting, support, security, and the roadmap.
+  sample inference, troubleshooting, support, security, and the roadmap.
 - Datasets and model weights are not included in the repository; users should
   prepare them locally.
-- Lightweight CLI smoke tests are enabled for the main command-line entrypoints.
-- A model card template is available for future trained weights.
-- Planned next steps include a sample workflow and clearer GUI error messages.
+- The GUI checks local model, dataset, image, folder, and video paths before
+  launching work.
+- Apple Silicon MPS has been checked with PyTorch 2.5.1, a tensor operation,
+  and one temporary image inference run.
+- Planned v0.2.0 work focuses on reproducible training presets, deeper runtime
+  smoke tests, and clearer experiment outputs.
 
 ## Features
 
@@ -48,14 +52,18 @@ than an unmaintained collection of scripts.
 | Model training | Train YOLOv8 models from the command line or GUI. |
 | Model validation | Evaluate trained weights and inspect mAP metrics. |
 | GUI demo | Use a `ttkbootstrap` desktop interface for common workflows. |
+| Device selection | Choose CPU, Apple Silicon MPS, or NVIDIA CUDA for CLI prediction. |
 
 ## Documentation
 
 - [macOS and Apple Silicon guide](docs/macos.md)
+- [Sample inference with local files](docs/sample_inference.md)
 - [Dataset preparation](docs/dataset.md)
 - [Model card template](docs/model_card.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Roadmap](ROADMAP.md)
+- [Contributing guide](CONTRIBUTING.md)
+- [Code of conduct](CODE_OF_CONDUCT.md)
 - [Support](SUPPORT.md)
 - [Security policy](SECURITY.md)
 
@@ -91,8 +99,10 @@ steel-defect-detection/
 ├── val.py                 # Validation entrypoint
 ├── video_predict.py       # Video inference helper
 ├── translate.py           # VOC XML to YOLO TXT conversion utility
+├── path_validation.py     # Dependency-light GUI path checks
 ├── dataset.yaml           # Dataset configuration
 ├── requirements.txt       # Python dependencies
+├── requirements-dev.txt   # Focused lint and test dependencies
 ├── docs/                  # Project setup and maintenance docs
 ├── .github/               # CI, Dependabot, and issue templates
 ├── datasets/              # Local datasets, ignored by git
@@ -146,6 +156,9 @@ Prepare these files locally:
 - Dataset: see [docs/dataset.md](docs/dataset.md)
 - Weights: download a YOLOv8 pretrained weight such as `yolov8n.pt`, or use your own trained `best.pt`
 
+For a dataset-free first run with your own local image and trusted weight, use
+[docs/sample_inference.md](docs/sample_inference.md).
+
 ### 3. Launch the GUI
 
 ```bash
@@ -178,7 +191,10 @@ python val.py --model runs/detect/train_result/weights/best.pt --data dataset.ya
 ### Predict
 
 ```bash
-python predict.py --model runs/detect/train_result/weights/best.pt --source path/to/image.jpg
+python predict.py \
+  --model runs/detect/train_result/weights/best.pt \
+  --source path/to/image.jpg \
+  --device cpu
 ```
 
 ## Dataset Preparation
@@ -220,6 +236,9 @@ python translate.py
 Model weights are intentionally excluded from git. Keep large artifacts locally,
 in cloud storage, or in GitHub Releases.
 
+Only load weights from sources you trust. PyTorch checkpoints may contain
+serialized Python objects.
+
 Common local choices:
 
 | Weight | Use case |
@@ -233,11 +252,13 @@ Common local choices:
 
 Dependabot is enabled for Python dependencies and GitHub Actions. Large
 dependency jumps are reviewed conservatively because PyTorch, OpenCV, NumPy, and
-Ultralytics compatibility can be sensitive across platforms.
+Ultralytics compatibility can be sensitive across platforms. This repository
+vendors Ultralytics `8.0.182`; PyTorch is capped below `2.6` because newer
+`torch.load` defaults are incompatible with that checkpoint loader.
 
 ## Release Notes
 
-See [RELEASE_NOTES.md](RELEASE_NOTES.md) for v0.1.1 changes, known limitations, and next plans.
+See [RELEASE_NOTES.md](RELEASE_NOTES.md) for v0.1.2 changes, known limitations, and next plans.
 
 ## License
 
