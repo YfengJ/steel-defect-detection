@@ -6,6 +6,7 @@ version: 2
 updates:
   - package-ecosystem: pip
     directory: "/"
+    versioning-strategy: increase-if-necessary
     schedule:
       interval: weekly
       time: "04:00"
@@ -15,6 +16,9 @@ updates:
     # Heavy ML/runtime packages are reviewed manually because compatibility
     # testing can vary across CPU, CUDA, and Apple Silicon environments.
     ignore:
+      - dependency-name: pytest
+        update-types:
+          - version-update:semver-major
       - dependency-name: torch
       - dependency-name: torchvision
       - dependency-name: opencv-python

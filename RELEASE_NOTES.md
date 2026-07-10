@@ -39,7 +39,7 @@ governance without refactoring the vendored YOLO core.
 
 - CI still uses Python 3.10 as the compatibility baseline.
 - CI installs runtime and development dependencies, then runs focused Ruff
-  checks, 21 dependency/path/repository unit tests, CLI smoke tests, repository
+  checks, 22 dependency/path/repository unit tests, CLI smoke tests, repository
   hygiene, and `python -m compileall .`.
 - Workflow permissions are read-only, superseded runs are cancelled, and the
   job has a 20-minute timeout.
