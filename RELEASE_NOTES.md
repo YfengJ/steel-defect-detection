@@ -31,6 +31,8 @@ governance without refactoring the vendored YOLO core.
   standard weights with the PyTorch 2.6+ default.
 - Added dependency contract tests so the vendored/runtime version boundary
   cannot be removed accidentally.
+- Updated pytest to 9.1.1 to address the vulnerable UNIX temporary-directory
+  handling reported in `GHSA-6w46-j5rx-g56g`.
 - Fixed the repository hygiene checker so an unstaged YAML deletion does not
   crash local checks.
 - Removed an inactive, outdated README translation workflow configuration.
@@ -39,7 +41,7 @@ governance without refactoring the vendored YOLO core.
 
 - CI still uses Python 3.10 as the compatibility baseline.
 - CI installs runtime and development dependencies, then runs focused Ruff
-  checks, 22 dependency/path/repository unit tests, CLI smoke tests, repository
+  checks, 23 dependency/path/repository unit tests, CLI smoke tests, repository
   hygiene, and `python -m compileall .`.
 - Workflow permissions are read-only, superseded runs are cancelled, and the
   job has a 20-minute timeout.
