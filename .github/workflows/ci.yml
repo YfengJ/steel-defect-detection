@@ -6,9 +6,17 @@ name: CI
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   syntax-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
@@ -24,9 +32,23 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+          python -m pip install -r requirements-dev.txt
+
+      - name: Lint maintained Python files
+        run: >-
+          python -m ruff check
+          train.py predict.py val.py video_predict.py path_validation.py
+          scripts tests
 
       - name: Check repository hygiene
         run: python scripts/check_repository_hygiene.py
+
+      - name: Run focused tests
+        run: >-
+          python -m pytest
+          tests/test_repository_hygiene.py
+          tests/test_path_validation.py
+          -q
 
       - name: Run CLI smoke tests
         run: python tests/test_cli_smoke.py

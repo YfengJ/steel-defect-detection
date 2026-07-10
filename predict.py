@@ -36,7 +36,7 @@ def main():
         print(f"🖼️正在处理: {args.source}")
         start_t = time.time()
 
-        results = model.predict(
+        model.predict(
             source=args.source,
             project=args.project,
             name=args.name,
