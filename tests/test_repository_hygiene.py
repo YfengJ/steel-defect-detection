@@ -31,3 +31,12 @@ def test_validate_github_yaml_ignores_non_github_yaml(tmp_path: Path) -> None:
     failures = validate_github_yaml(tmp_path, [Path("mkdocs.yml")])
 
     assert failures == []
+
+
+def test_validate_github_yaml_ignores_deleted_file(tmp_path: Path) -> None:
+    failures = validate_github_yaml(
+        tmp_path,
+        [Path(".github/obsolete.yml")],
+    )
+
+    assert failures == []
