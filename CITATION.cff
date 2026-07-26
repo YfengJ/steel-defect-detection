@@ -1,20 +1,31 @@
 cff-version: 1.2.0
-preferred-citation:
-  type: software
-  message: If you use this software, please cite it as below.
-  authors:
-  - family-names: Jocher
-    given-names: Glenn
-    orcid: "https://orcid.org/0000-0001-5950-6979"
-  - family-names: Chaurasia
-    given-names: Ayush
-    orcid: "https://orcid.org/0000-0002-7603-6750"
-  - family-names: Qiu
-    given-names: Jing
-    orcid: "https://orcid.org/0000-0003-3783-7069"
-  title: "YOLO by Ultralytics"
-  version: 8.0.0
-  # doi: 10.5281/zenodo.3908559  # TODO
-  date-released: 2023-1-10
-  license: AGPL-3.0
-  url: "https://github.com/ultralytics/ultralytics"
+message: "If you use this project, please cite it using the metadata below."
+title: "Steel Surface Defect Detection with YOLOv8"
+type: software
+version: 0.1.1
+authors:
+  - name: YfengJ
+repository-code: "https://github.com/YfengJ/steel-defect-detection"
+url: "https://github.com/YfengJ/steel-defect-detection"
+license: AGPL-3.0
+abstract: >-
+  A learning-oriented steel surface defect detection workflow with YOLOv8,
+  command-line training and inference, validation, and a desktop GUI.
+keywords:
+  - computer vision
+  - defect detection
+  - steel surface
+  - YOLOv8
+  - NEU-DET
+references:
+  - type: software
+    title: "YOLO by Ultralytics"
+    version: 8.0.182
+    authors:
+      - family-names: Jocher
+        given-names: Glenn
+      - family-names: Chaurasia
+        given-names: Ayush
+      - family-names: Qiu
+        given-names: Jing
+    url: "https://github.com/ultralytics/ultralytics"

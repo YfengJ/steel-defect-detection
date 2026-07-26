@@ -1,29 +1,37 @@
 # Roadmap
 
-This roadmap keeps the project focused on a small, runnable YOLOv8 steel surface defect detection workflow. Dates are intentionally not fixed because this is a learning-oriented open source project maintained in spare time.
+This roadmap keeps the project focused on a small, runnable YOLOv8 steel surface
+defect detection workflow. Dates are intentionally not fixed because this is a
+learning-oriented open source project maintained in spare time.
 
 ## v0.1.0 - Open Source Maintenance Baseline
 
-- Document the project scope as a YOLOv8 steel surface defect detection project.
-- Add macOS and Apple Silicon setup guidance.
-- Clarify that datasets, trained weights, and generated outputs are not stored in the repository.
-- Add basic GitHub Actions CI with dependency installation and Python syntax checks.
-- Add issue templates for bugs, feature requests, and documentation fixes.
-- Add security and support policies.
-- Keep training, validation, prediction, and GUI scripts close to the current implementation.
+- Document the project scope and supported learning use cases.
+- Add macOS, dataset, troubleshooting, support, and security guidance.
+- Exclude datasets, trained weights, and generated outputs from git.
+- Add basic GitHub Actions CI, Dependabot, and issue templates.
+- Preserve the existing training, validation, prediction, and GUI structure.
 
-## v0.2.0 - Reproducible Training Workflow
+## v0.1.1 - Reliability Baseline
 
-- Provide a small sample `dataset.yaml` and clearer dataset layout checks.
-- Add lightweight smoke tests for CLI argument parsing and dataset path validation.
-- Document recommended training presets for CPU, Apple Silicon MPS, and CUDA.
-- Add example commands for prediction, validation, and batch inference.
+- Restore valid source, Markdown, and YAML formatting.
+- Add focused CLI, path-validation, conversion, video, subprocess, and CPU runtime tests.
+- Improve GUI errors for missing local datasets, weights, images, and video sources.
+- Add repository hygiene, local documentation link, and large-artifact checks.
+- Verify a no-weight YOLO inference path on CPU and Apple Silicon MPS.
+- Align package, citation, release, and contribution metadata with this project.
+
+## v0.2.0 - Reproducible Sample Workflow
+
+- Add a scripted sample inference workflow without committing datasets or weights.
+- Document recommended presets for CPU, Apple Silicon MPS, and CUDA.
+- Add a small synthetic dataset fixture for training and validation smoke coverage.
+- Exercise a real Apple Silicon MPS training and validation workflow.
 - Improve generated output naming so repeated experiments are easier to compare.
 
 ## v0.3.0 - Usability and Release Quality
 
-- Add a minimal demo dataset or scripted sample download that does not commit dataset files.
-- Add model card documentation for any released trained weights.
-- Add screenshots or short demo media generated from public sample images.
-- Add a release checklist covering CI, docs, dataset instructions, and weight publishing.
-- Improve GUI error messages for missing models, missing dataset paths, and unavailable devices.
+- Add a model-card template for separately released trained weights.
+- Add a release checklist covering CI, docs, dataset instructions, and artifacts.
+- Expand GUI error states and manual cross-platform verification.
+- Publish public sample results with clear provenance and evaluation limitations.

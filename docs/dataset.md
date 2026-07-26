@@ -6,6 +6,10 @@ Datasets must be prepared locally. Do not commit dataset files, generated labels
 
 This project is configured for YOLO object detection of six NEU-DET steel surface defect classes:
 
+The dataset can be obtained from the
+[official Northeastern University page](https://faculty.neu.edu.cn/songkechen/zh_CN/zdylm/263270/list/index.htm).
+Follow the dataset owner's terms and citation guidance.
+
 | ID | Class |
 | --- | --- |
 | 0 | crazing |

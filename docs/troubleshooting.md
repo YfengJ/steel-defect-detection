@@ -2,7 +2,9 @@
 
 ## `ModuleNotFoundError: No module named 'ultralytics'`
 
-Install dependencies again inside the active virtual environment:
+This repository vendors Ultralytics under `ultralytics/`. First confirm that you
+are running commands from the repository root, then install dependencies inside
+the active virtual environment:
 
 ```bash
 python -m pip install -r requirements.txt
@@ -12,10 +14,27 @@ Then confirm:
 
 ```bash
 python - <<'PY'
+import ultralytics
 from ultralytics import YOLO
-print("ultralytics import ok")
+
+print("ultralytics import ok:", ultralytics.__file__)
 PY
 ```
+
+The printed path should point inside this cloned repository. Do not install a
+second PyPI copy of Ultralytics over the vendored source.
+
+## `找不到模型权重`
+
+The CLI and GUI require a local model file. Download a compatible YOLOv8 weight
+or use your own trained `best.pt`, then pass its real path:
+
+```bash
+python predict.py --model weights/best.pt --source path/to/image.jpg
+```
+
+Weights are intentionally excluded from git. Only load checkpoints from sources
+you trust; see [../SECURITY.md](../SECURITY.md).
 
 ## `Dataset 'dataset.yaml' images not found`
 

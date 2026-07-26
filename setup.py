@@ -6,6 +6,7 @@ from pathlib import Path
 from setuptools import setup
 
 # Settings
+# This file packages the vendored Ultralytics runtime, not the top-level project scripts.
 FILE = Path(__file__).resolve()
 PARENT = FILE.parent  # root directory
 README = (PARENT / 'README.md').read_text(encoding='utf-8')
@@ -39,7 +40,7 @@ def parse_requirements(file_path: Path):
 setup(
     name='ultralytics',  # name of pypi package
     version=get_version(),  # version of pypi package
-    python_requires='>=3.8',
+    python_requires='>=3.10,<3.13',
     license='AGPL-3.0',
     description=('Ultralytics YOLOv8 for SOTA object detection, multi-object tracking, instance segmentation, '
                  'pose estimation and image classification.'),
@@ -82,10 +83,9 @@ setup(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Software Development',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',

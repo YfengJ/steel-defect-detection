@@ -1,21 +1,15 @@
-<p align="center">
-  <h1 align="center">Steel Surface Defect Detection with YOLOv8</h1>
-  <p align="center">
-    An open source YOLOv8 project for steel surface defect detection, training, validation, inference, and GUI demos.
-  </p>
-  <p align="center">
-    <a href="README.md">English</a> | <a href="README.zh-CN.md">简体中文</a>
-  </p>
-  <p align="center">
-    <img src="https://img.shields.io/badge/Python-3.10%20recommended-blue?logo=python&logoColor=white" alt="Python">
-    <img src="https://img.shields.io/badge/YOLOv8-Ultralytics-purple" alt="YOLOv8">
-    <img src="https://img.shields.io/badge/GUI-ttkbootstrap-green" alt="GUI">
-    <img src="https://img.shields.io/badge/Dataset-NEU--DET-orange" alt="Dataset">
-    <img src="https://img.shields.io/badge/License-AGPL--3.0-red" alt="License">
-  </p>
-</p>
+# Steel Surface Defect Detection with YOLOv8
 
----
+An open source YOLOv8 project for steel surface defect detection, training, validation, inference, and GUI demos.
+
+[English](README.md) | [简体中文](README.zh-CN.md)
+
+![Python](https://img.shields.io/badge/Python-3.10%20recommended-blue?logo=python&logoColor=white)
+![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-purple)
+![GUI](https://img.shields.io/badge/GUI-ttkbootstrap-green)
+![Dataset](https://img.shields.io/badge/Dataset-NEU--DET-orange)
+![License](https://img.shields.io/badge/License-AGPL--3.0-red)
+[![CI](https://github.com/YfengJ/steel-defect-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/YfengJ/steel-defect-detection/actions/workflows/ci.yml)
 
 ## Overview
 
@@ -24,6 +18,14 @@ This repository is a learning-oriented steel surface defect detection project bu
 It is designed for students, computer vision beginners, and industrial vision learners who want a real, runnable, and maintainable open source project rather than an unmaintained collection of scripts.
 
 > Datasets, training outputs, and model weights are not included in this repository. Prepare them locally by following [docs/dataset.md](docs/dataset.md).
+
+## Current Status
+
+- Current release: **v0.1.1**.
+- Basic CI is enabled on pushes and pull requests with Python 3.10, Ruff, focused tests, repository hygiene checks, and `compileall`.
+- Setup guides are available for [macOS](docs/macos.md), [datasets](docs/dataset.md), [troubleshooting](docs/troubleshooting.md), [support](SUPPORT.md), [security](SECURITY.md), and the [roadmap](ROADMAP.md).
+- Datasets and model weights are intentionally excluded from the repository and must be prepared locally.
+- Planned work includes a public sample workflow, model-card documentation, broader MPS validation, and further GUI error handling.
 
 ## Features
 
@@ -77,8 +79,14 @@ steel-defect-detection/
 ├── val.py                 # Validation entrypoint
 ├── video_predict.py       # Video inference helper
 ├── translate.py           # VOC XML to YOLO TXT conversion utility
+├── path_validation.py     # Dependency-light local input validation
+├── process_runner.py      # GUI subprocess output and exit-code handling
 ├── dataset.yaml           # Dataset configuration
 ├── requirements.txt       # Python dependencies
+├── requirements-dev.txt   # Test and lint dependencies
+├── tests/                 # Focused CLI, runtime, and maintenance checks
+├── scripts/               # Repository hygiene tooling
+├── ultralytics/           # Vendored Ultralytics 8.0.182 runtime
 ├── docs/                  # Project setup and maintenance docs
 ├── .github/               # CI, Dependabot, and issue templates
 ├── datasets/              # Local datasets, ignored by git
@@ -103,7 +111,7 @@ The default configuration follows the six common NEU-DET steel surface defect cl
 
 ### 1. Requirements
 
-- Python 3.10 recommended
+- Python 3.10 to 3.12 (3.10 recommended and used by CI)
 - CPU, Apple Silicon MPS, or NVIDIA CUDA
 - Windows, Linux, or macOS
 
@@ -169,7 +177,7 @@ python predict.py --model runs/detect/train_result/weights/best.pt --source path
 
 ## Dataset Preparation
 
-This project can use the [NEU Surface Defect Database](http://faculty.neu.edu.cn/songkechen/zh_CN/zdylm/263270/list/) or another dataset with the same class mapping.
+This project can use the [NEU Surface Defect Database](https://faculty.neu.edu.cn/songkechen/zh_CN/zdylm/263270/list/index.htm) or another dataset with the same class mapping.
 
 Expected local layout:
 
@@ -204,6 +212,8 @@ python translate.py
 
 Model weights are intentionally excluded from git. Keep large artifacts locally, in cloud storage, or in GitHub Releases.
 
+Only load `.pt` or `.pth` checkpoints from sources you trust. See [SECURITY.md](SECURITY.md) before using third-party weights.
+
 Common local choices:
 
 | Weight | Use case |
@@ -215,7 +225,11 @@ Common local choices:
 
 ## Dependency Updates
 
-Dependabot is enabled for Python dependencies and GitHub Actions. Large dependency jumps are reviewed conservatively because PyTorch, OpenCV, NumPy, and Ultralytics compatibility can be sensitive across platforms.
+Dependabot is enabled for Python dependencies and GitHub Actions. Large dependency jumps are reviewed conservatively because PyTorch, OpenCV, NumPy, and Ultralytics compatibility can be sensitive across platforms. The repository vendors Ultralytics 8.0.182 and currently constrains PyTorch/TorchVision to a tested compatibility range.
+
+## Release Notes
+
+See [RELEASE_NOTES.md](RELEASE_NOTES.md) for v0.1.1 changes, known limitations, and next plans.
 
 ## License
 

@@ -1,0 +1,3 @@
+# Lightweight checks used by contributors and GitHub Actions.
+pytest>=9.1.1,<10.0
+ruff>=0.12,<1.0

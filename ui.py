@@ -1,9 +1,6 @@
 import sys
-import os
 import threading
 import queue
-import subprocess
-import re
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
@@ -27,10 +24,18 @@ except ImportError:
 from ttkbootstrap.dialogs import Messagebox
 
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from PIL import Image, ImageTk, ImageOps, ImageDraw, ImageFont
+from PIL import Image, ImageTk, ImageOps
+
+from path_validation import (
+    validate_dataset_config,
+    validate_directory_source,
+    validate_file_source,
+    validate_model_path,
+    validate_video_source,
+)
+from process_runner import stream_command
 
 # 引入YOLO
 from ultralytics import YOLO
@@ -113,8 +118,6 @@ class YOLOv8_GUI:
 
         # 状态控制
         self.video_loop_running = False
-        self.original_img = None
-        self.current_theme = 'superhero'
 
         # 配置Matplotlib字体
         plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei']
@@ -192,7 +195,7 @@ class YOLOv8_GUI:
             import torch
             gpu_available = torch.cuda.is_available()
             gpu_name = torch.cuda.get_device_name(0) if gpu_available else "CPU"
-        except:
+        except Exception:
             gpu_available = False
             gpu_name = "CPU"
 
@@ -201,7 +204,7 @@ class YOLOv8_GUI:
                   font=("Segoe UI", 9),
                   bootstyle="inverse-info").pack(side=RIGHT, padx=(15, 0))
 
-        ttk.Label(right, text="v2.5",
+        ttk.Label(right, text="v0.1.1",
                   font=("Segoe UI", 10, "bold"),
                   bootstyle="inverse-info").pack(side=RIGHT)
 
@@ -589,14 +592,13 @@ class YOLOv8_GUI:
 
     # ------------------ 辅助 UI 构建函数 ------------------
 
-    def create_file_input(self, parent, label, variable, width=40, btn_text="📂"):
-        ttk.Label(parent, text=label, font=("Microsoft YaHei", 9)).pack(side=LEFT, padx=(0, 5))
-        ttk.Entry(parent, textvariable=variable, width=width).pack(side=LEFT, fill=X, expand=YES)
-        ttk.Button(parent, text=btn_text, command=lambda: self.browse_file(variable),
-                   bootstyle="info-outline", padding=(8, 2)).pack(side=LEFT, padx=5)
-
     def create_grid_input(self, parent, row, label, variable, is_dir=False):
-        cmd = lambda: self.browse_dir(variable) if is_dir else self.browse_file(variable)
+        def cmd():
+            if is_dir:
+                self.browse_dir(variable)
+            else:
+                self.browse_file(variable)
+
         ttk.Label(parent, text=label, font=("Microsoft YaHei", 9)).grid(
             row=row, column=0, padx=5, pady=10, sticky=E)
         ttk.Entry(parent, textvariable=variable).grid(
@@ -621,13 +623,20 @@ class YOLOv8_GUI:
             self.log_text.config(state='disabled')
         self.master.after(100, self.process_log_queue)
 
+    def show_validation_error(self, message):
+        """Show an actionable local setup error without starting background work."""
+        self.log(message, "WARNING")
+        Messagebox.show_error(message, "本地文件未就绪")
+
     def browse_file(self, variable):
         path = filedialog.askopenfilename()
-        if path: variable.set(path)
+        if path:
+            variable.set(path)
 
     def browse_dir(self, variable):
         path = filedialog.askdirectory()
-        if path: variable.set(path)
+        if path:
+            variable.set(path)
 
     def browse_video_and_preview(self):
         """选择视频并显示第一帧预览"""
@@ -635,6 +644,7 @@ class YOLOv8_GUI:
         if path:
             self.video_source.set(path)
             self.video_status.config(text="✅ 视频已加载，点击【开始检测】运行", bootstyle="info")
+            cap = None
             try:
                 cap = cv2.VideoCapture(path)
                 ret, frame = cap.read()
@@ -642,34 +652,49 @@ class YOLOv8_GUI:
                     img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     img_pil = Image.fromarray(img_rgb)
                     self.show_image_on_canvas(img_pil, self.video_canvas)
-                cap.release()
             except Exception as e:
                 self.log(f"预览视频失败: {e}", "WARNING")
+            finally:
+                if cap is not None:
+                    cap.release()
 
-    def run_subprocess(self, cmd, log_callback=None, finish_callback=None):
+    def run_subprocess(self, cmd, log_callback=None, finish_callback=None, error_callback=None):
         def thread_target():
             try:
-                process = subprocess.Popen(
-                    cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                    universal_newlines=True, encoding='utf-8', bufsize=1
+                def handle_line(msg):
+                    self.log(msg)
+                    if log_callback:
+                        self.master.after(0, lambda message=msg: log_callback(message))
+
+                returncode = stream_command(cmd, handle_line)
+                if returncode == 0:
+                    if finish_callback:
+                        self.master.after(0, finish_callback)
+                    return
+
+                self.log(f"进程失败，退出码: {returncode}", "ERROR")
+                callback = error_callback or (
+                    lambda: self.update_status(f"❌ 任务失败（退出码 {returncode}）", "danger")
                 )
-                for line in process.stdout:
-                    msg = line.strip()
-                    if msg:
-                        self.log(msg)
-                        if log_callback: log_callback(msg)
-                process.wait()
-                if finish_callback: self.master.after(0, finish_callback)
+                self.master.after(0, callback)
             except Exception as e:
                 self.log(f"进程异常: {str(e)}", "ERROR")
+                callback = error_callback or (
+                    lambda: self.update_status("❌ 无法启动任务", "danger")
+                )
+                self.master.after(0, callback)
 
         threading.Thread(target=thread_target, daemon=True).start()
 
     # --- 训练逻辑 ---
     def start_training(self):
-        if not self.train_model.get() or not self.train_data.get():
-            Messagebox.show_error("请填写模型和数据集路径", "参数错误")
-            return
+        for message in (
+            validate_model_path(self.train_model.get()),
+            validate_dataset_config(self.train_data.get()),
+        ):
+            if message:
+                self.show_validation_error(message)
+                return
         self.train_gauge.pack(fill=X, pady=10)
         self.train_gauge.start()
         self.update_status("🔥 训练进行中...", "danger")
@@ -680,7 +705,7 @@ class YOLOv8_GUI:
                "--epochs", self.train_epochs.get(),
                "--batch", self.train_batch.get(),
                "--imgsz", self.train_imgsz.get()]
-        self.log(f"🚀 启动训练进程...", "INFO")
+        self.log("🚀 启动训练进程...", "INFO")
 
         def on_finish():
             self.train_gauge.stop()
@@ -688,16 +713,22 @@ class YOLOv8_GUI:
             self.update_status("✅ 训练完成", "success")
             self.show_toast(title="训练完成", message="模型训练已结束", bootstyle="success")
 
-        self.run_subprocess(cmd, finish_callback=on_finish)
+        def on_error():
+            self.train_gauge.stop()
+            self.train_gauge.pack_forget()
+            self.update_status("❌ 训练失败，请查看日志", "danger")
+
+        self.run_subprocess(cmd, finish_callback=on_finish, error_callback=on_error)
 
     # --- 验证逻辑 ---
     def start_validation(self):
-        if not self.val_model.get():
-            Messagebox.show_warning("请选择模型文件 (.pt)")
-            return
-        if not self.val_data.get():
-            Messagebox.show_warning("请选择数据集配置文件 (.yaml)")
-            return
+        for message in (
+            validate_model_path(self.val_model.get()),
+            validate_dataset_config(self.val_data.get()),
+        ):
+            if message:
+                self.show_validation_error(message)
+                return
 
         self.val_text.delete(1.0, tk.END)
         self.val_text.insert(tk.END, "⏳ 正在初始化验证进程...\n\n")
@@ -736,7 +767,8 @@ class YOLOv8_GUI:
 
             canvas_w = canvas.winfo_width()
             canvas_h = canvas.winfo_height()
-            if canvas_w < 10: canvas_w, canvas_h = 600, 400
+            if canvas_w < 10:
+                canvas_w, canvas_h = 600, 400
 
             ratio = min(canvas_w / pil_img.width, canvas_h / pil_img.height)
             new_size = (int(pil_img.width * ratio), int(pil_img.height * ratio))
@@ -751,9 +783,13 @@ class YOLOv8_GUI:
             self.log(f"显示图片错误: {e}", "ERROR")
 
     def start_prediction(self):
-        if not self.predict_model.get() or not self.predict_source.get():
-            Messagebox.show_error("请选择模型和图片")
-            return
+        for message in (
+            validate_model_path(self.predict_model.get()),
+            validate_file_source(self.predict_source.get(), "待检测图片"),
+        ):
+            if message:
+                self.show_validation_error(message)
+                return
         self.update_status("🔮 检测进行中...", "info")
         exp_name = f"single_{datetime.now().strftime('%H%M%S')}"
         cmd = [sys.executable, "predict.py",
@@ -769,9 +805,9 @@ class YOLOv8_GUI:
                 res_path = found_imgs[0]
                 self.show_image_on_canvas(res_path, self.predict_canvas)
                 txt_path = save_dir / "labels" / f"{Path(self.predict_source.get()).stem}.txt"
-                report_text = f"✅ 检测完成\n\n"
+                report_text = "✅ 检测完成\n\n"
                 report_text += f"📂 保存路径:\n{res_path}\n\n"
-                report_text += f"━━━━━━━━━━━━━━━\n\n"
+                report_text += "━━━━━━━━━━━━━━━\n\n"
                 if txt_path.exists():
                     with open(txt_path, 'r') as f:
                         lines = f.readlines()
@@ -798,9 +834,13 @@ class YOLOv8_GUI:
 
     # --- 批量预测逻辑 ---
     def start_batch_prediction(self):
-        if not self.batch_model.get() or not self.batch_data.get():
-            Messagebox.show_error("请完善信息")
-            return
+        for message in (
+            validate_model_path(self.batch_model.get()),
+            validate_directory_source(self.batch_data.get(), "待检测图片目录"),
+        ):
+            if message:
+                self.show_validation_error(message)
+                return
         self.update_status("🚀 批量处理进行中...", "info")
         exp_name = f"batch_{datetime.now().strftime('%H%M%S')}"
         cmd = [sys.executable, "predict.py",
@@ -822,8 +862,10 @@ class YOLOv8_GUI:
 
     def analyze_and_report_batch(self, label_dir, output_path):
         """生成详细报告并绘制图表"""
-        for widget in self.chart_pie_frame.winfo_children(): widget.destroy()
-        for widget in self.chart_hist_frame.winfo_children(): widget.destroy()
+        for widget in self.chart_pie_frame.winfo_children():
+            widget.destroy()
+        for widget in self.chart_hist_frame.winfo_children():
+            widget.destroy()
 
         stats = {
             'total_files': len(list(label_dir.glob("*.txt"))),
@@ -852,7 +894,7 @@ class YOLOv8_GUI:
         # 文本报告
         avg_conf = sum(stats['confidences']) / len(stats['confidences']) if stats['confidences'] else 0
 
-        report_text = f"📋 批量检测分析报告\n"
+        report_text = "📋 批量检测分析报告\n"
         report_text += f"{'━' * 24}\n\n"
         report_text += f"📂 输出目录:\n{output_path}\n\n"
         report_text += f"🖼️ 包含缺陷文件数: {stats['total_files']}\n"
@@ -860,14 +902,14 @@ class YOLOv8_GUI:
         report_text += f"🎯 平均置信度: {avg_conf:.2%}\n\n"
         report_text += f"{'━' * 24}\n\n"
 
-        report_text += f"📊 各类缺陷统计:\n\n"
+        report_text += "📊 各类缺陷统计:\n\n"
         for k, v in sorted(stats['classes'].items(), key=lambda x: x[1], reverse=True):
             ratio = v / stats['total_defects'] if stats['total_defects'] else 0
             bar = '█' * int(ratio * 15)
             report_text += f"  {k:<6} {bar} {v}个 ({ratio:.1%})\n"
 
         report_text += f"\n{'━' * 24}\n\n"
-        report_text += f"📏 缺陷尺寸分析:\n\n"
+        report_text += "📏 缺陷尺寸分析:\n\n"
         if stats['areas']:
             report_text += f"  最大: {max(stats['areas']):.4f}\n"
             report_text += f"  最小: {min(stats['areas']):.4f}\n"
@@ -877,7 +919,7 @@ class YOLOv8_GUI:
             report_text += "  暂无尺寸数据\n"
 
         report_text += f"\n{'━' * 24}\n\n"
-        report_text += f"📝 综合评价:\n\n"
+        report_text += "📝 综合评价:\n\n"
         if avg_conf > 0.8:
             report_text += "  ✅ 置信度高，结果可靠。\n"
         elif avg_conf < 0.5:
@@ -907,6 +949,8 @@ class YOLOv8_GUI:
             canvas1 = FigureCanvasTkAgg(fig1, master=self.chart_pie_frame)
             canvas1.draw()
             canvas1.get_tk_widget().pack(fill=BOTH, expand=YES)
+            # 关闭 pyplot 对图像的引用，避免多次批量分析后内存持续增长
+            plt.close(fig1)
 
         # 直方图
         if stats['confidences']:
@@ -929,6 +973,8 @@ class YOLOv8_GUI:
             canvas2 = FigureCanvasTkAgg(fig2, master=self.chart_hist_frame)
             canvas2.draw()
             canvas2.get_tk_widget().pack(fill=BOTH, expand=YES)
+            # 同上，释放 pyplot 缓存的图像句柄
+            plt.close(fig2)
 
     # --- 视频预测逻辑 ---
     def start_video_prediction(self):
@@ -938,30 +984,43 @@ class YOLOv8_GUI:
         self.run_video_inference(source="0")
 
     def run_video_inference(self, source):
-        if not self.video_model.get():
-            Messagebox.show_error("请选择模型")
-            return
+        for message in (
+            validate_model_path(self.video_model.get()),
+            validate_video_source(source),
+        ):
+            if message:
+                self.show_validation_error(message)
+                return
         self.video_loop_running = True
         self.video_status.config(text="🔥 正在推理中...", bootstyle="danger")
         self.update_status("📹 视频推理进行中...", "danger")
 
         def video_thread():
+            cap = None
             try:
                 model = YOLO(self.video_model.get())
                 cap = cv2.VideoCapture(int(source) if source == "0" else source)
+                if not cap.isOpened():
+                    raise ValueError(f"无法打开视频源: {source}")
                 while self.video_loop_running and cap.isOpened():
                     ret, frame = cap.read()
-                    if not ret: break
+                    if not ret:
+                        break
                     results = model(frame, verbose=False)
                     res_plotted = results[0].plot()
                     img_rgb = cv2.cvtColor(res_plotted, cv2.COLOR_BGR2RGB)
                     img_pil = Image.fromarray(img_rgb)
                     self.master.after(0, lambda i=img_pil: self.show_image_on_canvas(i, self.video_canvas))
-                cap.release()
                 self.master.after(0, lambda: self.video_status.config(text="⏸️ 已停止", bootstyle="secondary"))
                 self.master.after(0, lambda: self.update_status("✅ 视频处理完成", "success"))
             except Exception as e:
                 self.log(f"视频流错误: {e}", "ERROR")
+                self.master.after(0, lambda: self.video_status.config(text="❌ 视频处理失败", bootstyle="danger"))
+                self.master.after(0, lambda: self.update_status("❌ 视频处理失败", "danger"))
+            finally:
+                self.video_loop_running = False
+                if cap is not None:
+                    cap.release()
 
         threading.Thread(target=video_thread, daemon=True).start()
 

@@ -6,7 +6,7 @@ This project was originally developed in a Windows CUDA environment. On macOS, e
 
 - macOS 12.3 or newer for MPS.
 - Apple Silicon Python, not a Rosetta x86 Python, when using MPS.
-- Python 3.10 is recommended because the CI workflow uses Python 3.10.
+- Python 3.10 to 3.12 is supported; 3.10 is recommended because CI uses it.
 - A local virtual environment.
 
 Official references:
@@ -27,6 +27,9 @@ python -m pip install -r requirements.txt
 ```
 
 If `python3.10` is not available, install Python 3.10 with Homebrew or pyenv first.
+Python 3.13 is not currently supported by the project's PyTorch compatibility range.
+Run commands from the repository root so Python imports the vendored Ultralytics
+8.0.182 source under `ultralytics/`.
 
 ## Check MPS Availability
 
@@ -43,6 +46,33 @@ PY
 ```
 
 If `mps available` is `False`, use `--device cpu`.
+
+## Runtime Smoke Checks
+
+The automated smoke test builds the bundled YOLOv8 architecture and predicts a
+64 x 64 synthetic image without downloading weights or datasets:
+
+```bash
+python -m pytest tests/test_runtime_smoke.py -q
+```
+
+For an Apple Silicon MPS check, run:
+
+```bash
+python - <<'PY'
+import numpy as np
+from ultralytics import YOLO
+
+model = YOLO("ultralytics/cfg/models/v8/yolov8.yaml")
+image = np.zeros((64, 64, 3), dtype=np.uint8)
+results = model.predict(image, imgsz=64, device="mps", verbose=False)
+print("MPS prediction results:", len(results))
+PY
+```
+
+The v0.1.1 maintenance pass verified this no-weight MPS prediction on Apple
+Silicon with PyTorch 2.5.1. Full training still depends on your dataset, model
+weights, memory, and the operations used by your selected model.
 
 ## Prepare Dataset and Weights
 
@@ -63,6 +93,7 @@ datasets/NEU-DET/
 ```
 
 Download YOLOv8 pretrained weights yourself, for example `yolov8n.pt`, or place your own trained `best.pt` under a local path such as `weights/`.
+Only use checkpoints from sources you trust; see [../SECURITY.md](../SECURITY.md).
 
 ## Train on Apple Silicon
 

@@ -1,15 +1,22 @@
 # Security Policy
 
+## Supported Versions
+
+| Version | Supported |
+| --- | --- |
+| `0.1.x` | Yes |
+| Older snapshots | No |
+
 ## Reporting a Vulnerability
 
 Please do not open a public GitHub issue for security-sensitive reports.
 
-To report a vulnerability, contact the maintainer through GitHub by opening a minimal private communication request at:
-
-- GitHub profile: https://github.com/YfengJ
-- Repository: https://github.com/YfengJ/steel-defect-detection
-
-If private vulnerability reporting is enabled for the repository, use GitHub's private vulnerability reporting flow. Include the affected file or workflow, steps to reproduce, expected impact, and any safe proof-of-concept details.
+Use GitHub private vulnerability reporting when it is enabled for the
+[repository](https://github.com/YfengJ/steel-defect-detection). Include the
+affected file or workflow, steps to reproduce, expected impact, and safe
+proof-of-concept details. If private reporting is unavailable, open a minimal
+public issue asking the maintainer to establish a private contact channel; do
+not include vulnerability details in that issue.
 
 ## Scope
 
@@ -21,3 +28,10 @@ This project is a research and learning-oriented computer vision project. Securi
 - CI or repository configuration issues
 
 Please do not include real production secrets, private datasets, or proprietary model weights in reports.
+
+## Model Checkpoints
+
+Only load model weights and PyTorch checkpoints from sources you trust. Legacy
+checkpoints can contain serialized Python objects, and loading an untrusted
+checkpoint may execute code in the current Python environment. Do not attach
+private or untrusted weights to public issues.
