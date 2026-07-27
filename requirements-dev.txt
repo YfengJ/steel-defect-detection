@@ -1,3 +1,5 @@
 # Lightweight checks used by contributors and GitHub Actions.
 pytest>=9.1.1,<10.0
-ruff>=0.12,<1.0
+# Ruff 0.13+ enables stricter rules that fail on legacy helper scripts outside
+# the current maintenance scope; keep CI on the validated 0.12 line for now.
+ruff>=0.12,<0.13

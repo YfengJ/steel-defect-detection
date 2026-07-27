@@ -51,3 +51,13 @@ def test_dependabot_avoids_floor_only_updates() -> None:
     assert not any(
         rule["dependency-name"] == "pytest" for rule in pip_update["ignore"]
     )
+
+
+def test_ruff_stays_on_validated_minor_line() -> None:
+    requirements = [
+        line.strip()
+        for line in (REPO_ROOT / "requirements-dev.txt").read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+
+    assert "ruff>=0.12,<0.13" in requirements
