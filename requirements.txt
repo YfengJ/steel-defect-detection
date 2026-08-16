@@ -3,7 +3,7 @@
 
 # Base ----------------------------------------
 matplotlib>=3.3.0
-numpy>=1.22.2 # pinned by Snyk to avoid a vulnerability
+numpy>=1.22.2,<2.4 # Ultralytics 8.0.182 still uses np.trapz, removed in NumPy 2.4
 opencv-python>=4.6.0
 pillow>=7.1.2
 pyyaml>=6.0.3

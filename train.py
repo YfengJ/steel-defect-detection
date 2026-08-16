@@ -1,6 +1,8 @@
 import argparse
 import sys
 
+from path_validation import resolved_dataset_config_path
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a YOLOv8 steel surface defect detector.')
@@ -36,19 +38,20 @@ def main():
 
         model = YOLO(args.model)
 
-        train_kwargs = {
-            'data': args.data,
-            'epochs': args.epochs,
-            'imgsz': args.imgsz,
-            'batch': args.batch,
-            'workers': 2,  # Windows下如果报错，设为0
-            'exist_ok': True,
-            'name': 'train_result'
-        }
-        if args.device:
-            train_kwargs['device'] = args.device
+        with resolved_dataset_config_path(args.data) as dataset_config:
+            train_kwargs = {
+                'data': str(dataset_config),
+                'epochs': args.epochs,
+                'imgsz': args.imgsz,
+                'batch': args.batch,
+                'workers': 2,  # Windows下如果报错，设为0
+                'exist_ok': True,
+                'name': 'train_result'
+            }
+            if args.device:
+                train_kwargs['device'] = args.device
 
-        results = model.train(**train_kwargs)
+            results = model.train(**train_kwargs)
 
         print("\n🎉 训练流程结束")
         print(f"💾 模型保存路径: {results.save_dir}")

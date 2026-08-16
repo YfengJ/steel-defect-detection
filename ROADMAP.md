@@ -28,6 +28,17 @@ learning-oriented open source project maintained in spare time.
 - Add project-specific contribution guidance, a code of conduct, CODEOWNERS,
   and a pull request template.
 
+## v0.1.3 - Reproducibility And Project Clarity
+
+- Resolve dataset roots relative to their YAML file instead of a user-level
+  Ultralytics setting.
+- Protect the vendored metrics implementation from the NumPy 2.4 API removal.
+- Record a fresh YOLOv8s/NEU-DET Apple Silicon experiment without inventing
+  unavailable historical results.
+- Document the maintained project surface and the vendored Ultralytics origin.
+- Run the complete health check automatically every week.
+- Put a real result image and shortest inference path near the README top.
+
 ## v0.2.0 - Reproducible Training Workflow
 
 - Provide a small sample `dataset.yaml` and clearer dataset layout checks.

@@ -9,6 +9,8 @@ An open source YOLOv8 project for steel surface defect detection, training, vali
 ![GUI](https://img.shields.io/badge/GUI-ttkbootstrap-green)
 ![Dataset](https://img.shields.io/badge/Dataset-NEU--DET-orange)
 ![License](https://img.shields.io/badge/License-AGPL--3.0-red)
+[![CI](https://github.com/YfengJ/steel-defect-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/YfengJ/steel-defect-detection/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/YfengJ/steel-defect-detection)](https://github.com/YfengJ/steel-defect-detection/releases)
 
 ---
 
@@ -26,11 +28,27 @@ than an unmaintained collection of scripts.
 > Datasets, training outputs, and model weights are not included in this
 > repository. Prepare them locally by following [docs/dataset.md](docs/dataset.md).
 
+![Steel defect detection result](screenshots/predict.png)
+
+## Start Here
+
+```bash
+python -m pip install -r requirements.txt
+python predict.py --model /path/to/trusted-best.pt --source /path/to/image.jpg --device cpu
+```
+
+The rendered result is saved under `runs/detect/`. Bring a trusted local weight
+and an image you are allowed to process; the repository intentionally does not
+bundle either. See the [sample inference guide](docs/sample_inference.md) for
+CPU, Apple Silicon MPS, and NVIDIA CUDA examples.
+
 ## Current Status
 
-- Current version: `v0.1.2`.
+- Current version: `v0.1.3`.
 - CI runs focused Ruff checks, unit tests, CLI smoke tests, repository hygiene,
   and Python compilation on Python 3.10.
+- The same health checks run automatically every Monday and can be started
+  manually from GitHub Actions.
 - Documentation exists for macOS, dataset preparation, model cards,
   sample inference, troubleshooting, support, security, and the roadmap.
 - Datasets and model weights are not included in the repository; users should
@@ -41,6 +59,26 @@ than an unmaintained collection of scripts.
   and one temporary image inference run.
 - Planned v0.2.0 work focuses on reproducible training presets, deeper runtime
   smoke tests, and clearer experiment outputs.
+- A fresh 50-epoch YOLOv8s/NEU-DET reproduction is recorded transparently in
+  the [experiment log](docs/experiments/yolov8s-neu-det-baseline.md).
+  Historical metrics are not presented as verified because the original
+  checkpoint and result files were lost during a device migration.
+
+## Reproduced Baseline
+
+The v0.1.3 Apple Silicon run trained YOLOv8s for 50 epochs on a local 1,440 / 360
+image split. Independent CPU validation of its local `best.pt` produced:
+
+| Precision | Recall | mAP50 | mAP50-95 | mAP75 |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.719 | 0.721 | 0.7637 | 0.4455 | 0.4530 |
+
+These values describe one public-dataset-style split, not factory performance.
+The `crazing` class was the weakest at 0.1861 mAP50-95. See the
+[experiment log](docs/experiments/yolov8s-neu-det-baseline.md) and
+[model card](docs/experiments/yolov8s-neu-det-v0.1.3-model-card.md) for
+per-class results, environment details, limitations, and the local weight
+checksum. The dataset and weight are not committed or released.
 
 ## Features
 
@@ -60,6 +98,8 @@ than an unmaintained collection of scripts.
 - [Sample inference with local files](docs/sample_inference.md)
 - [Dataset preparation](docs/dataset.md)
 - [Model card template](docs/model_card.md)
+- [YOLOv8s baseline experiment log](docs/experiments/yolov8s-neu-det-baseline.md)
+- [YOLOv8s v0.1.3 model card](docs/experiments/yolov8s-neu-det-v0.1.3-model-card.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Roadmap](ROADMAP.md)
 - [Contributing guide](CONTRIBUTING.md)
@@ -109,6 +149,26 @@ steel-defect-detection/
 ├── runs/                  # Local training/inference outputs, ignored by git
 └── weights/ or *.pt        # Local model weights, ignored by git
 ```
+
+## Maintained Scope And Upstream
+
+This repository vendors **Ultralytics 8.0.182** so the original project remains
+reproducible without silently changing its YOLO runtime. The vendored
+`ultralytics/`, much of `docs/`, and generic `examples/` originate from the
+[Ultralytics project](https://github.com/ultralytics/ultralytics) under
+AGPL-3.0.
+
+Project-specific maintenance focuses on:
+
+- `train.py`, `val.py`, `predict.py`, and `video_predict.py`;
+- the `ttkbootstrap` desktop workflow in `ui.py`;
+- dataset conversion and path validation;
+- CPU, CUDA, and Apple Silicon MPS setup and compatibility;
+- focused tests, CI, release documentation, and contributor support.
+
+Changes to the vendored YOLO core are intentionally conservative. A future
+move to a pinned external package is tracked as a compatibility project rather
+than being presented as original model architecture work.
 
 ## Defect Classes
 
@@ -254,11 +314,21 @@ Dependabot is enabled for Python dependencies and GitHub Actions. Large
 dependency jumps are reviewed conservatively because PyTorch, OpenCV, NumPy, and
 Ultralytics compatibility can be sensitive across platforms. This repository
 vendors Ultralytics `8.0.182`; PyTorch is capped below `2.6` because newer
-`torch.load` defaults are incompatible with that checkpoint loader.
+`torch.load` defaults are incompatible with that checkpoint loader. NumPy is
+capped below `2.4` because this vendored runtime still calls `numpy.trapz`.
 
 ## Release Notes
 
-See [RELEASE_NOTES.md](RELEASE_NOTES.md) for v0.1.2 changes, known limitations, and next plans.
+See [RELEASE_NOTES.md](RELEASE_NOTES.md) for v0.1.3 changes, known limitations, and next plans.
+
+## Community
+
+Real bug reports, reproduction notes, and focused pull requests are welcome.
+Share a tested environment or result in the
+[reproduction reports discussion](https://github.com/YfengJ/steel-defect-detection/discussions/57).
+If this project helps your study or research, consider starring the repository
+to support continued maintenance. Please do not use star exchanges or other
+artificial promotion.
 
 ## License
 

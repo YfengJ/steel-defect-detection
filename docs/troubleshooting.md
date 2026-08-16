@@ -1,5 +1,32 @@
 # Troubleshooting
 
+## Dataset Path Points To Another Checkout
+
+If an error mentions a missing dataset under an unrelated worktree or user
+directory, first update to v0.1.3 or newer. Earlier scripts passed relative
+dataset roots directly to Ultralytics 8.0.182, which resolves them against its
+global `datasets_dir` setting. Current `train.py` and `val.py` generate a
+temporary absolute-path configuration without modifying your source YAML.
+
+Also confirm the configured paths locally:
+
+```bash
+python train.py --model yolov8s.pt --data dataset.yaml --epochs 1 --device cpu
+```
+
+## NumPy Has No Attribute `trapz`
+
+Ultralytics 8.0.182 uses `numpy.trapz`, which was removed in NumPy 2.4. Install
+the repository's tested requirement range rather than an unconstrained latest
+NumPy:
+
+```bash
+python -m pip install --upgrade --force-reinstall "numpy>=1.22.2,<2.4"
+python -m pip install -r requirements.txt
+```
+
+Use a fresh virtual environment if another package keeps upgrading NumPy.
+
 ## `ModuleNotFoundError: No module named 'ultralytics'`
 
 Install dependencies again inside the active virtual environment:

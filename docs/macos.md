@@ -1,5 +1,41 @@
 # macOS and Apple Silicon
 
+## v0.1.3 Reproduction Environment
+
+The maintainer verified a one-epoch smoke run and a complete 50-epoch YOLOv8s
+training and validation run with the following local environment:
+
+| Component | Value |
+| --- | --- |
+| Hardware | Apple M5 |
+| Operating system | macOS 26.5.2 arm64 |
+| Python | 3.11.15 |
+| PyTorch | 2.5.1 |
+| TorchVision | 0.20.1 |
+| NumPy | 2.3.5 |
+| Ultralytics | Vendored 8.0.182 |
+
+Command:
+
+```bash
+python train.py \
+  --model yolov8s.pt \
+  --data dataset.yaml \
+  --epochs 50 \
+  --batch 16 \
+  --imgsz 640 \
+  --device mps
+```
+
+This validates one machine, dataset layout, and dependency set. It does not
+guarantee that every model, augmentation, or PyTorch operator supports MPS.
+Rerun with `--device cpu` when an operation is unavailable.
+
+The 50-epoch run completed in 3.051 hours. Independent CPU validation of the
+local best weight produced mAP50 0.7637 and mAP50-95 0.4455. See the
+[baseline experiment log](experiments/yolov8s-neu-det-baseline.md) for all
+metrics and limitations.
+
 This project was originally developed in a Windows CUDA environment. On macOS, especially Apple Silicon, use CPU or PyTorch MPS instead of CUDA.
 
 ## Recommended Environment

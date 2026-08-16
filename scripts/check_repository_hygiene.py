@@ -12,6 +12,7 @@ MAX_TRACKED_FILE_BYTES = 20 * 1024 * 1024
 
 BANNED_DIRS = {"datasets", "runs", "weights", "wandb"}
 BANNED_SUFFIXES = {
+    ".7z",
     ".engine",
     ".h5",
     ".mlmodel",
@@ -23,6 +24,7 @@ BANNED_SUFFIXES = {
     ".tflite",
     ".torchscript",
     ".weights",
+    ".zip",
 }
 TEXT_SUFFIXES = {
     ".bat",
