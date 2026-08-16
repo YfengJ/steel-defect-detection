@@ -8,8 +8,8 @@ device migration. The maintainer remembers an approximate historical mAP near
 ## Status
 
 - Dataset structure and label pairing: verified locally.
-- One-epoch training and validation smoke test: in progress for v0.1.3.
-- Full 50-epoch baseline: pending completion.
+- One-epoch training and validation smoke test: completed.
+- Full 50-epoch baseline: completed and independently validated.
 - Published weight: not yet available.
 
 ## Reproduction Contract
@@ -23,7 +23,8 @@ device migration. The maintainer remembers an approximate historical mAP near
 | Train images / labels | 1,440 / 1,440 |
 | Validation images / labels | 360 / 360 |
 | Image size | 640 |
-| Epochs | 50 planned |
+| Epochs | 50 completed |
+| Batch size | 16 |
 | Random seed | 0, deterministic mode enabled by the vendored trainer |
 | Dataset and weights in git | No |
 
@@ -41,7 +42,7 @@ python train.py \
   --model /path/to/yolov8s.pt \
   --data dataset.yaml \
   --epochs 50 \
-  --batch 8 \
+  --batch 16 \
   --imgsz 640 \
   --device mps
 ```
@@ -72,10 +73,39 @@ run to another checkout.
 
 ## Results
 
-Verified metrics will be added only after the full command completes and the
-generated `results.csv` is reviewed. The final record must include mAP50,
-mAP50-95, precision, recall, per-class mAP50-95, runtime, the training commit,
-and a SHA256 checksum for any released weight.
+The 50-epoch MPS run completed in 3.051 hours. The trainer's final validation
+reported mAP50 0.764 and mAP50-95 0.445. A separate CPU invocation of `val.py`
+against the generated local `best.pt` produced the following reproducible
+summary:
+
+| Precision | Recall | mAP50 | mAP50-95 | mAP75 |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.719 | 0.721 | 0.7637 | 0.4455 | 0.4530 |
+
+Per-class results from the independent CPU validation:
+
+| Class | Images | Instances | Precision | Recall | mAP50 | mAP50-95 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `crazing` | 360 | 148 | 0.625 | 0.383 | 0.472 | 0.1861 |
+| `inclusion` | 360 | 174 | 0.716 | 0.767 | 0.816 | 0.4821 |
+| `patches` | 360 | 192 | 0.741 | 0.891 | 0.904 | 0.6045 |
+| `pitted_surface` | 360 | 85 | 0.825 | 0.788 | 0.847 | 0.5253 |
+| `rolled-in_scale` | 360 | 127 | 0.611 | 0.567 | 0.630 | 0.2883 |
+| `scratches` | 360 | 96 | 0.795 | 0.928 | 0.913 | 0.5864 |
+
+The independent CPU run measured 226.5 ms inference per image at 640 pixels;
+the trainer's final MPS validation measured 24.5 ms per image. These timings
+are local observations, not a controlled hardware benchmark.
+
+Local `best.pt` SHA256:
+
+```text
+5449dc254a57a43499963d466b0cb5f5f7d6e45520166d08dc7afed2f618d3a6
+```
+
+The checkpoint is intentionally not committed or attached to the release while
+dataset redistribution and derived-weight licensing remain undocumented. The
+training output remains under ignored `runs/` storage.
 
 ## Limitations
 
@@ -83,4 +113,6 @@ and a SHA256 checksum for any released weight.
 - NEU-DET imagery may not represent a specific factory, camera, steel grade,
   lighting setup, or defect prevalence.
 - MPS results are not directly interchangeable with CUDA throughput results.
+- `crazing` recall and mAP were substantially weaker than the other classes in
+  this split and need targeted data/annotation review before model comparison.
 - PyTorch checkpoints must only be loaded from trusted sources.

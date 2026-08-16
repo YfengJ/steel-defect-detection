@@ -48,9 +48,23 @@ python predict.py --model /path/to/trusted-best.pt --source /path/to/image.jpg -
 - GUI 会在启动任务前检查模型、数据集、图片、目录和视频路径。
 - Apple Silicon MPS 已使用 PyTorch 2.5.1 完成张量运算和一次临时图片推理实测。
 - v0.2.0 将重点完善可复现训练参数、运行时 smoke tests 和实验输出管理。
-- 新一轮 YOLOv8s/NEU-DET 复现实验会如实记录在
+- 新一轮 50 epochs YOLOv8s/NEU-DET 复现实验已如实记录在
   [实验日志](docs/experiments/yolov8s-neu-det-baseline.md) 中。由于设备迁移时遗失了原始
   checkpoint 和结果文件，仓库不会把回忆中的历史指标当作已验证结果发布。
+
+## 已复现基线
+
+v0.1.3 在 Apple Silicon 上使用本地 1,440 / 360 图片划分训练 YOLOv8s 50 轮。
+随后使用 CPU 对本地 `best.pt` 独立验证，结果如下：
+
+| Precision | Recall | mAP50 | mAP50-95 | mAP75 |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.719 | 0.721 | 0.7637 | 0.4455 | 0.4530 |
+
+这些数值只代表一个公开数据集风格划分，不代表工厂现场性能。`crazing` 是最弱类别，
+mAP50-95 为 0.1861。每类结果、环境、限制和本地权重校验值请查看
+[实验日志](docs/experiments/yolov8s-neu-det-baseline.md) 与
+[模型卡](docs/experiments/yolov8s-neu-det-v0.1.3-model-card.md)。数据集和权重均未提交或发布。
 
 ## 核心功能
 
@@ -71,6 +85,7 @@ python predict.py --model /path/to/trusted-best.pt --source /path/to/image.jpg -
 - [数据集准备说明](docs/dataset.md)
 - [模型卡模板](docs/model_card.md)
 - [YOLOv8s 基线实验日志](docs/experiments/yolov8s-neu-det-baseline.md)
+- [YOLOv8s v0.1.3 模型卡](docs/experiments/yolov8s-neu-det-v0.1.3-model-card.md)
 - [常见问题排查](docs/troubleshooting.md)
 - [Roadmap](ROADMAP.md)
 - [贡献指南](CONTRIBUTING.md)

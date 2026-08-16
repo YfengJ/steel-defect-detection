@@ -59,10 +59,26 @@ CPU, Apple Silicon MPS, and NVIDIA CUDA examples.
   and one temporary image inference run.
 - Planned v0.2.0 work focuses on reproducible training presets, deeper runtime
   smoke tests, and clearer experiment outputs.
-- A fresh YOLOv8s/NEU-DET reproduction is being recorded transparently in the
-  [experiment log](docs/experiments/yolov8s-neu-det-baseline.md). Historical
-  metrics are not presented as verified because the original checkpoint and
-  result files were lost during a device migration.
+- A fresh 50-epoch YOLOv8s/NEU-DET reproduction is recorded transparently in
+  the [experiment log](docs/experiments/yolov8s-neu-det-baseline.md).
+  Historical metrics are not presented as verified because the original
+  checkpoint and result files were lost during a device migration.
+
+## Reproduced Baseline
+
+The v0.1.3 Apple Silicon run trained YOLOv8s for 50 epochs on a local 1,440 / 360
+image split. Independent CPU validation of its local `best.pt` produced:
+
+| Precision | Recall | mAP50 | mAP50-95 | mAP75 |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.719 | 0.721 | 0.7637 | 0.4455 | 0.4530 |
+
+These values describe one public-dataset-style split, not factory performance.
+The `crazing` class was the weakest at 0.1861 mAP50-95. See the
+[experiment log](docs/experiments/yolov8s-neu-det-baseline.md) and
+[model card](docs/experiments/yolov8s-neu-det-v0.1.3-model-card.md) for
+per-class results, environment details, limitations, and the local weight
+checksum. The dataset and weight are not committed or released.
 
 ## Features
 
@@ -83,6 +99,7 @@ CPU, Apple Silicon MPS, and NVIDIA CUDA examples.
 - [Dataset preparation](docs/dataset.md)
 - [Model card template](docs/model_card.md)
 - [YOLOv8s baseline experiment log](docs/experiments/yolov8s-neu-det-baseline.md)
+- [YOLOv8s v0.1.3 model card](docs/experiments/yolov8s-neu-det-v0.1.3-model-card.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Roadmap](ROADMAP.md)
 - [Contributing guide](CONTRIBUTING.md)

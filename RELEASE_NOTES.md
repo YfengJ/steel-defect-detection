@@ -30,14 +30,16 @@ audit. Core YOLO architecture and GUI workflows are unchanged.
 ### Apple Silicon Verification
 
 The release environment uses macOS 26.5.2 arm64 on Apple M5, Python 3.11.15,
-PyTorch 2.5.1, TorchVision 0.20.1, NumPy 2.3.5, and MPS. A one-epoch YOLOv8s
-training and validation smoke run completed on 1,440 local training images and
-360 local validation images. Its low one-epoch metrics are intentionally not
-presented as the project baseline.
+PyTorch 2.5.1, TorchVision 0.20.1, NumPy 2.3.5, and MPS. A 50-epoch YOLOv8s
+run completed in 3.051 hours on 1,440 local training images and 360 local
+validation images. Independent CPU validation of the local best weight
+reported precision 0.719, recall 0.721, mAP50 0.7637, mAP50-95 0.4455, and
+mAP75 0.4530.
 
-The 50-epoch result, per-class metrics, runtime, and artifact checksum are
-recorded in `docs/experiments/yolov8s-neu-det-baseline.md` after completion.
-Datasets, checkpoints, and generated `runs/` output remain outside git.
+Per-class metrics, environment details, limitations, and the local weight
+SHA256 are recorded in `docs/experiments/yolov8s-neu-det-baseline.md`. The
+`crazing` class was weakest at 0.1861 mAP50-95. Datasets, checkpoints, and
+generated `runs/` output remain outside git.
 
 ### Upgrade Notes
 
