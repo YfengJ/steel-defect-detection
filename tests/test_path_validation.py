@@ -1,12 +1,55 @@
 from pathlib import Path
 
 from path_validation import (
+    load_dataset_config,
+    resolved_dataset_config_path,
     validate_dataset_config,
     validate_directory_source,
     validate_file_source,
     validate_model_path,
     validate_video_source,
 )
+
+
+def test_load_dataset_config_resolves_root_from_yaml_location(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    config = config_dir / "dataset.yaml"
+    config.write_text(
+        "path: ../data\ntrain: images/train\nval: images/val\n",
+        encoding="utf-8",
+    )
+
+    loaded = load_dataset_config(config)
+
+    assert loaded["path"] == str((tmp_path / "data").resolve())
+
+
+def test_load_dataset_config_rejects_non_mapping_yaml(tmp_path: Path) -> None:
+    config = tmp_path / "dataset.yaml"
+    config.write_text("- images/train\n", encoding="utf-8")
+
+    try:
+        load_dataset_config(config)
+    except ValueError as exc:
+        assert "top-level mapping" in str(exc)
+    else:
+        raise AssertionError("Expected a ValueError for a non-mapping dataset YAML")
+
+
+def test_resolved_dataset_config_path_is_temporary_and_absolute(tmp_path: Path) -> None:
+    config = tmp_path / "dataset.yaml"
+    config.write_text(
+        "path: data\ntrain: images/train\nval: images/val\n",
+        encoding="utf-8",
+    )
+
+    with resolved_dataset_config_path(config) as resolved_path:
+        loaded = load_dataset_config(resolved_path)
+        assert loaded["path"] == str((tmp_path / "data").resolve())
+        assert resolved_path.is_file()
+
+    assert not resolved_path.exists()
 
 
 def test_validate_model_path_reports_missing_weight(tmp_path: Path) -> None:

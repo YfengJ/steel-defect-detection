@@ -141,6 +141,11 @@ datasets/
 runs/
 wandb/
 .DS_Store
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.tgz
 
 # Neural Network weights -----------------------------------------------------------------------------------------------
 weights/

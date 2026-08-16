@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TypeAlias
 
 import yaml
@@ -17,6 +20,35 @@ def _path(value: PathLike) -> Path:
 def _resolve(base: Path, value: object) -> Path:
     path = _path(str(value))
     return path if path.is_absolute() else base / path
+
+
+def load_dataset_config(value: PathLike) -> dict:
+    """Load a dataset YAML with its root resolved relative to the YAML file."""
+    config_path = _path(value).resolve()
+    try:
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        raise ValueError("Dataset YAML contains invalid syntax.") from exc
+    if not isinstance(config, dict):
+        raise ValueError("Dataset YAML must contain a top-level mapping.")
+
+    dataset_root = _resolve(config_path.parent, config.get("path", ".")).resolve()
+    resolved = dict(config)
+    resolved["path"] = str(dataset_root)
+    return resolved
+
+
+@contextmanager
+def resolved_dataset_config_path(value: PathLike) -> Iterator[Path]:
+    """Yield a temporary YAML that is independent of Ultralytics settings."""
+    config = load_dataset_config(value)
+    with TemporaryDirectory(prefix="steel-defect-dataset-") as temp_dir:
+        resolved_path = Path(temp_dir) / "dataset.yaml"
+        resolved_path.write_text(
+            yaml.safe_dump(config, allow_unicode=True, sort_keys=False),
+            encoding="utf-8",
+        )
+        yield resolved_path
 
 
 def _label_path(image_path: Path) -> Path | None:
@@ -65,15 +97,14 @@ def validate_dataset_config(value: PathLike) -> str | None:
         )
 
     try:
-        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, yaml.YAMLError) as exc:
+        config = load_dataset_config(config_path)
+    except (OSError, UnicodeError, ValueError) as exc:
         return f"无法读取数据集配置：{config_path}（{exc.__class__.__name__}）。"
 
     if not isinstance(config, dict):
         return f"无法读取数据集配置：{config_path}。YAML 顶层必须是键值映射。"
 
-    root_value = config.get("path", ".")
-    dataset_root = _resolve(config_path.parent, root_value)
+    dataset_root = Path(config["path"])
 
     for split in ("train", "val"):
         split_value = config.get(split)

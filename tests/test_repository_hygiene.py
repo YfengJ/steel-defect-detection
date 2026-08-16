@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from scripts.check_repository_hygiene import validate_github_yaml
+from scripts.check_repository_hygiene import BANNED_SUFFIXES, validate_github_yaml
+
+
+def test_repository_hygiene_blocks_dataset_archives() -> None:
+    assert ".zip" in BANNED_SUFFIXES
 
 
 def test_validate_github_yaml_accepts_valid_files(tmp_path: Path) -> None:

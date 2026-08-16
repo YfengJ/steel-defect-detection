@@ -1,6 +1,8 @@
 import argparse
 import sys
 
+from path_validation import resolved_dataset_config_path
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Validate a trained YOLOv8 steel defect detection model.')
@@ -23,11 +25,15 @@ def main():
 
         print("⏳ 开始验证数据集...")
         # 验证
-        metrics = model.val(
-            data=args.data,
-            split='val',
-            verbose=True
-        )
+        if args.data:
+            with resolved_dataset_config_path(args.data) as dataset_config:
+                metrics = model.val(
+                    data=str(dataset_config),
+                    split='val',
+                    verbose=True
+                )
+        else:
+            metrics = model.val(split='val', verbose=True)
 
         # 打印清晰的摘要供UI捕获
         print("\n" + "=" * 30)
