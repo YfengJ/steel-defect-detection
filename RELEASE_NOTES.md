@@ -1,5 +1,73 @@
 # Release Notes
 
+## v0.1.3 - Reproducibility And Project Clarity
+
+This maintenance release fixes two clean-environment failures found while
+reproducing YOLOv8s training on Apple Silicon. It also makes the repository's
+upstream relationship, maintained scope, and experiment evidence easier to
+audit. Core YOLO architecture and GUI workflows are unchanged.
+
+### Highlights
+
+- Resolve relative dataset roots from the supplied YAML location before
+  invoking the vendored Ultralytics runtime. A stale global `datasets_dir`
+  setting can no longer redirect training or validation to another checkout.
+- Cap NumPy below 2.4 because Ultralytics 8.0.182 still uses `numpy.trapz`,
+  which NumPy 2.4 removed.
+- Add focused tests for temporary resolved dataset configurations, dependency
+  compatibility, weekly CI, and dataset-archive hygiene.
+- Ignore ZIP and common archive formats, and reject tracked ZIP files in the
+  repository hygiene check.
+- Run the existing full health check every Monday and support manual Actions
+  dispatches.
+- Move a real detection screenshot and shortest inference path near the top of
+  both READMEs.
+- Document which project files are maintained locally and which source/docs
+  are vendored from Ultralytics 8.0.182.
+- Add a transparent YOLOv8s baseline experiment log and ethical bilingual
+  outreach notes.
+
+### Apple Silicon Verification
+
+The release environment uses macOS 26.5.2 arm64 on Apple M5, Python 3.11.15,
+PyTorch 2.5.1, TorchVision 0.20.1, NumPy 2.3.5, and MPS. A one-epoch YOLOv8s
+training and validation smoke run completed on 1,440 local training images and
+360 local validation images. Its low one-epoch metrics are intentionally not
+presented as the project baseline.
+
+The 50-epoch result, per-class metrics, runtime, and artifact checksum are
+recorded in `docs/experiments/yolov8s-neu-det-baseline.md` after completion.
+Datasets, checkpoints, and generated `runs/` output remain outside git.
+
+### Upgrade Notes
+
+Create a fresh virtual environment or reinstall the tested NumPy range:
+
+```bash
+python -m pip install --upgrade --force-reinstall "numpy>=1.22.2,<2.4"
+python -m pip install -r requirements.txt
+```
+
+Only load PyTorch checkpoints from trusted sources.
+
+### Known Limitations
+
+- The repository vendors an older Ultralytics runtime for compatibility.
+- CI does not train a model, launch the desktop GUI, or exercise CUDA/MPS.
+- One Apple Silicon environment does not prove compatibility across all Macs,
+  CUDA systems, or Windows/Linux configurations.
+- Dataset licensing must be checked before redistributing images or trained
+  weights. This release does not bundle either.
+- This remains an educational and research workflow, not a production or
+  safety-critical inspection system.
+
+### Next Plans
+
+- Add a temporary synthetic CPU training/validation fixture for CI.
+- Complete the GUI cross-platform and unavailable-device smoke checklist.
+- Decide whether v0.2.0 should keep vendoring Ultralytics or migrate to a
+  separately pinned package.
+
 ## v0.1.2 - Runtime And Contributor Confidence
 
 This patch release turns the documentation baseline into a tested local

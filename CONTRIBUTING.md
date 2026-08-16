@@ -87,7 +87,8 @@ version. A dependency pull request should explain:
 - Any known platform or Python-version limitation.
 
 The current PyTorch and TorchVision upper bounds protect compatibility with the
-vendored Ultralytics 8.0.182 checkpoint loader.
+vendored Ultralytics 8.0.182 checkpoint loader. The NumPy upper bound preserves
+the `numpy.trapz` API required by its metrics implementation.
 
 ## Documentation
 

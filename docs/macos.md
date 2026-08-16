@@ -1,5 +1,36 @@
 # macOS and Apple Silicon
 
+## v0.1.3 Reproduction Environment
+
+The maintainer verified a full one-epoch YOLOv8s training and validation smoke
+run with the following local environment:
+
+| Component | Value |
+| --- | --- |
+| Hardware | Apple M5 |
+| Operating system | macOS 26.5.2 arm64 |
+| Python | 3.11.15 |
+| PyTorch | 2.5.1 |
+| TorchVision | 0.20.1 |
+| NumPy | 2.3.5 |
+| Ultralytics | Vendored 8.0.182 |
+
+Command:
+
+```bash
+python train.py \
+  --model yolov8s.pt \
+  --data dataset.yaml \
+  --epochs 1 \
+  --batch 8 \
+  --imgsz 640 \
+  --device mps
+```
+
+This validates one machine, dataset layout, and dependency set. It does not
+guarantee that every model, augmentation, or PyTorch operator supports MPS.
+Rerun with `--device cpu` when an operation is unavailable.
+
 This project was originally developed in a Windows CUDA environment. On macOS, especially Apple Silicon, use CPU or PyTorch MPS instead of CUDA.
 
 ## Recommended Environment

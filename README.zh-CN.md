@@ -9,6 +9,8 @@
 ![GUI](https://img.shields.io/badge/GUI-ttkbootstrap-green)
 ![Dataset](https://img.shields.io/badge/Dataset-NEU--DET-orange)
 ![License](https://img.shields.io/badge/License-AGPL--3.0-red)
+[![CI](https://github.com/YfengJ/steel-defect-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/YfengJ/steel-defect-detection/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/YfengJ/steel-defect-detection)](https://github.com/YfengJ/steel-defect-detection/releases)
 
 ---
 
@@ -23,15 +25,32 @@
 > 仓库不包含 NEU-DET 数据集、训练结果、`.pt/.pth` 权重或其他大文件。
 > 请按照 [docs/dataset.md](docs/dataset.md) 自行准备数据集和模型权重。
 
+![钢铁表面缺陷检测结果](screenshots/predict.png)
+
+## 从这里开始
+
+```bash
+python -m pip install -r requirements.txt
+python predict.py --model /path/to/trusted-best.pt --source /path/to/image.jpg --device cpu
+```
+
+渲染结果保存在 `runs/detect/`。请准备来源可信的本地权重和有权使用的图片；
+仓库不会捆绑这两类文件。CPU、Apple Silicon MPS 和 NVIDIA CUDA 的完整示例请参考
+[示例推理指南](docs/sample_inference.md)。
+
 ## 当前状态
 
-- 当前版本：`v0.1.2`。
+- 当前版本：`v0.1.3`。
 - CI 使用 Python 3.10 执行 Ruff 检查、单元测试、CLI smoke tests、仓库卫生检查和 Python 编译。
+- 相同的健康检查会在每周一自动运行，也可以在 GitHub Actions 页面手动触发。
 - 已有 macOS、数据集、模型卡、示例推理、故障排查、支持、安全和路线图文档。
 - 数据集和模型权重不包含在仓库中，需要用户在本地自行准备。
 - GUI 会在启动任务前检查模型、数据集、图片、目录和视频路径。
 - Apple Silicon MPS 已使用 PyTorch 2.5.1 完成张量运算和一次临时图片推理实测。
 - v0.2.0 将重点完善可复现训练参数、运行时 smoke tests 和实验输出管理。
+- 新一轮 YOLOv8s/NEU-DET 复现实验会如实记录在
+  [实验日志](docs/experiments/yolov8s-neu-det-baseline.md) 中。由于设备迁移时遗失了原始
+  checkpoint 和结果文件，仓库不会把回忆中的历史指标当作已验证结果发布。
 
 ## 核心功能
 
@@ -51,6 +70,7 @@
 - [使用本地文件完成示例推理](docs/sample_inference.md)
 - [数据集准备说明](docs/dataset.md)
 - [模型卡模板](docs/model_card.md)
+- [YOLOv8s 基线实验日志](docs/experiments/yolov8s-neu-det-baseline.md)
 - [常见问题排查](docs/troubleshooting.md)
 - [Roadmap](ROADMAP.md)
 - [贡献指南](CONTRIBUTING.md)
@@ -100,6 +120,23 @@ steel-defect-detection/
 ├── runs/                  # 本地训练/推理输出，不提交
 └── weights/ 或 *.pt        # 本地模型权重，不提交
 ```
+
+## 维护范围与上游关系
+
+为了保留原项目的可复现运行环境，本仓库内置了 **Ultralytics 8.0.182**。
+其中 `ultralytics/`、大部分通用 `docs/` 和 `examples/` 内容来自采用 AGPL-3.0
+协议的 [Ultralytics 上游项目](https://github.com/ultralytics/ultralytics)。
+
+本项目重点维护：
+
+- `train.py`、`val.py`、`predict.py` 和 `video_predict.py`；
+- `ui.py` 中基于 `ttkbootstrap` 的桌面工作流；
+- 数据集转换与路径检查；
+- CPU、CUDA 和 Apple Silicon MPS 环境兼容；
+- 项目测试、CI、版本发布文档和贡献者支持。
+
+对内置 YOLO 核心的修改会保持保守。未来切换到固定版本的外部依赖属于兼容性工程，
+不会被描述为本项目原创的模型架构工作。
 
 ## 检测类别
 
@@ -241,10 +278,18 @@ python translate.py
 NumPy 和 Ultralytics 的跨平台兼容性比较敏感，大版本依赖更新会保守处理。本仓库内置
 Ultralytics `8.0.182` 源码；由于更高版本的 `torch.load` 默认行为与该版本权重加载器不兼容，
 PyTorch 当前限制在 `2.6` 以下。
+NumPy 当前限制在 `2.4` 以下，因为内置运行时仍会调用 `numpy.trapz`。
 
 ## Release Notes
 
-v0.1.2 的更新内容、已知限制和后续计划请查看 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
+v0.1.3 的更新内容、已知限制和后续计划请查看 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
+
+## 社区参与
+
+欢迎提交真实的错误报告、复现记录和范围清晰的 Pull Request。如果这个项目对你的学习
+或研究有帮助，也可以在
+[复现报告 Discussion](https://github.com/YfengJ/steel-defect-detection/discussions/57)
+分享经过测试的环境和结果，并通过 Star 支持项目继续维护。请不要使用互刷或其他人为制造的 Star。
 
 ## License
 

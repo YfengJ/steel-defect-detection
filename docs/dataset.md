@@ -47,6 +47,10 @@ test: images/test
 
 If your dataset is elsewhere, update `path` to an absolute path or a path relative to the repository root.
 
+`train.py` and `val.py` normalize that root relative to the YAML file before
+calling the vendored Ultralytics runtime. This prevents an old user-level
+Ultralytics `datasets_dir` setting from redirecting a run to another checkout.
+
 ## Label Format
 
 YOLO detection labels use one `.txt` file per image:
