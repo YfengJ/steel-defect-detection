@@ -66,6 +66,19 @@ mAP50-95 为 0.1861。每类结果、环境、限制和本地权重校验值请�
 [实验日志](docs/experiments/yolov8s-neu-det-baseline.md) 与
 [模型卡](docs/experiments/yolov8s-neu-det-v0.1.3-model-card.md)。数据集和权重均未提交或发布。
 
+| 缺陷类别 | Precision | Recall | mAP50 | mAP50-95 |
+| --- | ---: | ---: | ---: | ---: |
+| `crazing` | 0.625 | 0.383 | 0.472 | 0.1861 |
+| `inclusion` | 0.716 | 0.767 | 0.816 | 0.4821 |
+| `patches` | 0.741 | 0.891 | 0.904 | 0.6045 |
+| `pitted_surface` | 0.825 | 0.788 | 0.847 | 0.5253 |
+| `rolled-in_scale` | 0.611 | 0.567 | 0.630 | 0.2883 |
+| `scratches` | 0.795 | 0.928 | 0.913 | 0.5864 |
+
+**复现实验配置：** YOLOv8s、50 个 epoch、640 px 输入尺寸、batch size 16，
+使用 Apple M5 的 MPS 完成训练，随后在 CPU 上对 360 张验证图像中的 822 个
+标注缺陷实例进行独立验证。
+
 ## 核心功能
 
 | 功能 | 描述 |
