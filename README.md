@@ -80,6 +80,19 @@ The `crazing` class was the weakest at 0.1861 mAP50-95. See the
 per-class results, environment details, limitations, and the local weight
 checksum. The dataset and weight are not committed or released.
 
+| Class | Precision | Recall | mAP50 | mAP50-95 |
+| --- | ---: | ---: | ---: | ---: |
+| `crazing` | 0.625 | 0.383 | 0.472 | 0.1861 |
+| `inclusion` | 0.716 | 0.767 | 0.816 | 0.4821 |
+| `patches` | 0.741 | 0.891 | 0.904 | 0.6045 |
+| `pitted_surface` | 0.825 | 0.788 | 0.847 | 0.5253 |
+| `rolled-in_scale` | 0.611 | 0.567 | 0.630 | 0.2883 |
+| `scratches` | 0.795 | 0.928 | 0.913 | 0.5864 |
+
+**Reproduction setup:** YOLOv8s, 50 epochs, 640 px input, batch size 16,
+Apple M5 with MPS training, followed by independent CPU validation on 360
+validation images containing 822 labeled defect instances.
+
 ## Features
 
 | Feature | Description |
