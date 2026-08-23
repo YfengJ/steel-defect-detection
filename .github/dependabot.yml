@@ -16,6 +16,11 @@ updates:
     # Heavy ML/runtime packages are reviewed manually because compatibility
     # testing can vary across CPU, CUDA, and Apple Silicon environments.
     ignore:
+      # Ruff 0.13+ enables additional rules that are not yet adopted by the
+      # maintained legacy entrypoints. Upgrade it deliberately with lint fixes.
+      - dependency-name: ruff
+        versions:
+          - ">=0.13"
       - dependency-name: torch
       - dependency-name: torchvision
       - dependency-name: opencv-python
