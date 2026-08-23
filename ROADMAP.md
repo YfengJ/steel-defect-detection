@@ -23,8 +23,9 @@ learning-oriented open source project maintained in spare time.
 - Verify one Apple Silicon MPS tensor operation and image inference outside git.
 - Expose prediction device selection through `predict.py --device`.
 - Protect the vendored checkpoint loader with tested PyTorch/TorchVision bounds.
-- Run focused Ruff checks, unit tests, CLI smoke tests, repository hygiene, and
-  compileall in CI.
+- Run focused Ruff checks, unit tests, CLI smoke tests, a temporary synthetic
+  CPU training/validation integration test, repository hygiene, and compileall
+  in CI.
 - Add project-specific contribution guidance, a code of conduct, CODEOWNERS,
   and a pull request template.
 

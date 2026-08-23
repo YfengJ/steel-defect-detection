@@ -54,6 +54,9 @@ jobs:
           tests/test_dependency_contracts.py
           -q
 
+      - name: Run synthetic training and validation smoke test
+        run: python -m pytest tests/test_training_smoke.py -q
+
       - name: Run CLI smoke tests
         run: python tests/test_cli_smoke.py
 

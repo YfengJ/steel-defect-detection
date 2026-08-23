@@ -68,9 +68,16 @@ python -m pytest \
   -q
 
 python tests/test_cli_smoke.py
+python -m pytest tests/test_training_smoke.py -q
 python scripts/check_repository_hygiene.py
 python -m compileall .
 ```
+
+The training smoke test creates two synthetic images per split, trains a
+YOLOv8n model for one epoch at 64 px on CPU, and validates the generated
+checkpoint. All data and outputs use pytest's temporary directory. It added
+about 16 seconds on the maintainer's Apple Silicon CPU; hosted CI timing may
+vary.
 
 Python 3.10 is the CI baseline. Platform-specific changes should also include
 the local environment and manual command used for verification.
