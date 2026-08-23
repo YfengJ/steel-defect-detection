@@ -59,6 +59,22 @@ def test_dependabot_avoids_floor_only_updates() -> None:
     )
 
 
+def test_dependabot_keeps_ruff_on_validated_minor_line() -> None:
+    config = yaml.safe_load(
+        (REPO_ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+    )
+    pip_update = next(
+        update
+        for update in config["updates"]
+        if update["package-ecosystem"] == "pip"
+    )
+    ruff_rule = next(
+        rule for rule in pip_update["ignore"] if rule["dependency-name"] == "ruff"
+    )
+
+    assert ruff_rule["versions"] == [">=0.13"]
+
+
 def test_ci_includes_weekly_health_check() -> None:
     config = yaml.safe_load(
         (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
