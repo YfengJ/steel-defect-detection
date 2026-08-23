@@ -41,13 +41,14 @@ python predict.py --model /path/to/trusted-best.pt --source /path/to/image.jpg -
 ## 当前状态
 
 - 当前版本：`v0.1.3`。
-- CI 使用 Python 3.10 执行 Ruff 检查、单元测试、CLI smoke tests、仓库卫生检查和 Python 编译。
+- CI 使用 Python 3.10 执行 Ruff 检查、单元测试、CLI smoke tests、合成数据 CPU
+  训练/验证集成测试、仓库卫生检查和 Python 编译。
 - 相同的健康检查会在每周一自动运行，也可以在 GitHub Actions 页面手动触发。
 - 已有 macOS、数据集、模型卡、示例推理、故障排查、支持、安全和路线图文档。
 - 数据集和模型权重不包含在仓库中，需要用户在本地自行准备。
 - GUI 会在启动任务前检查模型、数据集、图片、目录和视频路径。
 - Apple Silicon MPS 已使用 PyTorch 2.5.1 完成张量运算和一次临时图片推理实测。
-- v0.2.0 将重点完善可复现训练参数、运行时 smoke tests 和实验输出管理。
+- v0.2.0 将重点完善可复现训练参数、更广泛的设备检查和实验输出管理。
 - 新一轮 50 epochs YOLOv8s/NEU-DET 复现实验已如实记录在
   [实验日志](docs/experiments/yolov8s-neu-det-baseline.md) 中。由于设备迁移时遗失了原始
   checkpoint 和结果文件，仓库不会把回忆中的历史指标当作已验证结果发布。

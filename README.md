@@ -45,8 +45,9 @@ CPU, Apple Silicon MPS, and NVIDIA CUDA examples.
 ## Current Status
 
 - Current version: `v0.1.3`.
-- CI runs focused Ruff checks, unit tests, CLI smoke tests, repository hygiene,
-  and Python compilation on Python 3.10.
+- CI runs focused Ruff checks, unit tests, CLI smoke tests, a synthetic CPU
+  training/validation integration test, repository hygiene, and Python
+  compilation on Python 3.10.
 - The same health checks run automatically every Monday and can be started
   manually from GitHub Actions.
 - Documentation exists for macOS, dataset preparation, model cards,
@@ -57,8 +58,8 @@ CPU, Apple Silicon MPS, and NVIDIA CUDA examples.
   launching work.
 - Apple Silicon MPS has been checked with PyTorch 2.5.1, a tensor operation,
   and one temporary image inference run.
-- Planned v0.2.0 work focuses on reproducible training presets, deeper runtime
-  smoke tests, and clearer experiment outputs.
+- Planned v0.2.0 work focuses on reproducible training presets, broader device
+  checks, and clearer experiment outputs.
 - A fresh 50-epoch YOLOv8s/NEU-DET reproduction is recorded transparently in
   the [experiment log](docs/experiments/yolov8s-neu-det-baseline.md).
   Historical metrics are not presented as verified because the original
