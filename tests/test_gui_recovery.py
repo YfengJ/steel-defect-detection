@@ -55,6 +55,7 @@ def gui():
     instance.show_toast = Mock()
     instance.callbacks = callbacks
     instance.namespace = namespace
+    instance.video_worker_active = False
     return instance
 
 
@@ -127,6 +128,14 @@ def test_video_open_failure_releases_capture_and_resets_state(gui):
 
 def test_active_video_does_not_start_another_worker(gui):
     gui.video_loop_running = True
+    gui.video_worker_active = True
+    gui.run_video_inference("0")
+    gui.update_status.assert_not_called()
+
+
+def test_stopping_video_does_not_start_another_worker(gui):
+    gui.video_loop_running = False
+    gui.video_worker_active = True
     gui.run_video_inference("0")
     gui.update_status.assert_not_called()
 
@@ -145,6 +154,7 @@ def test_video_inference_failure_releases_capture(gui):
     gui.run_video_inference("input.mp4")
 
     assert gui.video_loop_running is False
+    assert gui.video_worker_active is False
     capture.release.assert_called_once()
     for callback, args in gui.callbacks:
         callback(*args)

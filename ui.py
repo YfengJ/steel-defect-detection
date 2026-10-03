@@ -121,6 +121,7 @@ class YOLOv8_GUI:
 
         # 状态控制
         self.video_loop_running = False
+        self.video_worker_active = False
         self.original_img = None
         self.current_theme = 'superhero'
 
@@ -984,7 +985,7 @@ class YOLOv8_GUI:
         self.run_video_inference(source="0")
 
     def run_video_inference(self, source):
-        if self.video_loop_running:
+        if self.video_worker_active:
             return
         for message in (
             validate_model_path(self.video_model.get()),
@@ -994,6 +995,7 @@ class YOLOv8_GUI:
                 self.show_validation_error(message)
                 return
         self.video_loop_running = True
+        self.video_worker_active = True
         self.video_status.config(text="🔥 正在推理中...", bootstyle="danger")
         self.update_status("📹 视频推理进行中...", "danger")
         model_path = self.video_model.get()
@@ -1021,7 +1023,8 @@ class YOLOv8_GUI:
                 if cap is not None:
                     cap.release()
                 self.video_loop_running = False
-                if error:
+                self.video_worker_active = False
+                if error is not None:
                     self.master.after(0, lambda: self.video_status.config(text="视频失败，请查看日志", bootstyle="danger"))
                     self.master.after(0, self.update_status, "视频失败，请查看日志", "danger")
                 else:
