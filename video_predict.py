@@ -1,4 +1,5 @@
 import argparse
+import math
 
 
 class VideoPredictor:
@@ -7,6 +8,8 @@ class VideoPredictor:
         """
         独立运行的视频预测函数
         """
+        cap = None
+        writer = None
         try:
             from ultralytics import YOLO
             import cv2
@@ -24,9 +27,15 @@ class VideoPredictor:
             w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             fps = cap.get(cv2.CAP_PROP_FPS) or 25
+            if not math.isfinite(fps) or fps <= 0:
+                fps = 25
+            if w <= 0 or h <= 0:
+                raise ValueError(f"视频尺寸无效: {w}x{h}")
 
             # 输出设置
             writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+            if not writer.isOpened():
+                raise OSError(f"无法创建输出视频: {output_path}。请检查目录、写入权限和视频编码支持。")
 
             # 字体加载（带容错）
             try:
@@ -72,12 +81,16 @@ class VideoPredictor:
 
                 writer.write(frame)
 
-            cap.release()
-            writer.release()
             print("✅ 视频处理完成")
 
         except Exception as e:
             print(f"❌ 视频处理错误: {e}")
+            raise
+        finally:
+            if writer is not None:
+                writer.release()
+            if cap is not None:
+                cap.release()
 
 
 if __name__ == "__main__":
@@ -87,4 +100,7 @@ if __name__ == "__main__":
     parser.add_argument('--output', default='output.mp4', help='输出视频路径')
     args = parser.parse_args()
 
-    VideoPredictor.run(args.model, args.source, args.output)
+    try:
+        VideoPredictor.run(args.model, args.source, args.output)
+    except Exception:
+        parser.exit(1)

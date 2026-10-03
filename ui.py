@@ -121,6 +121,7 @@ class YOLOv8_GUI:
 
         # 状态控制
         self.video_loop_running = False
+        self.video_worker_active = False
         self.original_img = None
         self.current_theme = 'superhero'
 
@@ -661,20 +662,26 @@ class YOLOv8_GUI:
 
     def run_subprocess(self, cmd, log_callback=None, finish_callback=None):
         def thread_target():
+            returncode = 1
             try:
-                process = subprocess.Popen(
+                with subprocess.Popen(
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                    universal_newlines=True, encoding='utf-8', bufsize=1
-                )
-                for line in process.stdout:
-                    msg = line.strip()
-                    if msg:
-                        self.log(msg)
-                        if log_callback: log_callback(msg)
-                process.wait()
-                if finish_callback: self.master.after(0, finish_callback)
+                    universal_newlines=True, encoding='utf-8', errors='replace', bufsize=1
+                ) as process:
+                    for line in process.stdout:
+                        msg = line.strip()
+                        if msg:
+                            self.log(msg)
+                            if log_callback:
+                                self.master.after(0, log_callback, msg)
+                    returncode = process.wait()
+                if returncode:
+                    self.log(f"进程退出码: {returncode}。请查看上方错误日志。", "ERROR")
             except Exception as e:
                 self.log(f"进程异常: {str(e)}", "ERROR")
+            finally:
+                if finish_callback:
+                    self.master.after(0, finish_callback, returncode)
 
         threading.Thread(target=thread_target, daemon=True).start()
 
@@ -699,9 +706,12 @@ class YOLOv8_GUI:
                "--imgsz", self.train_imgsz.get()]
         self.log(f"🚀 启动训练进程...", "INFO")
 
-        def on_finish():
+        def on_finish(returncode):
             self.train_gauge.stop()
             self.train_gauge.pack_forget()
+            if returncode:
+                self.update_status("训练失败，请查看日志", "danger")
+                return
             self.update_status("✅ 训练完成", "success")
             self.show_toast(title="训练完成", message="模型训练已结束", bootstyle="success")
 
@@ -727,7 +737,10 @@ class YOLOv8_GUI:
             "--data", self.val_data.get()
         ]
 
-        def on_val_finish():
+        def on_val_finish(returncode):
+            if returncode:
+                self.update_status("验证失败，请查看日志", "danger")
+                return
             self.update_status("✅ 验证完成", "success")
             self.show_toast("验证完成", "结果已输出")
 
@@ -784,7 +797,10 @@ class YOLOv8_GUI:
                "--conf", self.predict_conf.get(),
                "--name", exp_name, "--save", "--project", "runs/detect"]
 
-        def on_predict_finish():
+        def on_predict_finish(returncode):
+            if returncode:
+                self.update_status("单图检测失败，请查看日志", "danger")
+                return
             save_dir = Path("runs/detect") / exp_name
             found_imgs = list(save_dir.glob("*.jpg")) + list(save_dir.glob("*.png")) + list(save_dir.glob("*.jpeg"))
             if found_imgs:
@@ -815,6 +831,7 @@ class YOLOv8_GUI:
                 self.show_toast("检测成功", "结果已更新", bootstyle="success")
             else:
                 self.log("未找到结果图片", "WARNING")
+                self.update_status("未找到结果图片，请查看日志", "warning")
 
         self.run_subprocess(cmd, finish_callback=on_predict_finish)
 
@@ -834,7 +851,10 @@ class YOLOv8_GUI:
                "--source", self.batch_data.get(),
                "--name", exp_name, "--save", "--save_txt", "--project", "runs/detect"]
 
-        def on_batch_finish():
+        def on_batch_finish(returncode):
+            if returncode:
+                self.update_status("批量检测失败，请查看日志", "danger")
+                return
             self.log("批量处理完成，开始生成分析报告...")
             save_dir = Path("runs/detect") / exp_name / "labels"
             if save_dir.exists():
@@ -843,6 +863,7 @@ class YOLOv8_GUI:
                 self.show_toast("批量完成", "报告与图表已生成", bootstyle="success")
             else:
                 self.log("未找到标签目录，可能未检测到任何目标", "WARNING")
+                self.update_status("批量处理结束，未生成标签", "warning")
 
         self.run_subprocess(cmd, finish_callback=on_batch_finish)
 
@@ -964,6 +985,8 @@ class YOLOv8_GUI:
         self.run_video_inference(source="0")
 
     def run_video_inference(self, source):
+        if self.video_worker_active:
+            return
         for message in (
             validate_model_path(self.video_model.get()),
             validate_video_source(source),
@@ -972,13 +995,19 @@ class YOLOv8_GUI:
                 self.show_validation_error(message)
                 return
         self.video_loop_running = True
+        self.video_worker_active = True
         self.video_status.config(text="🔥 正在推理中...", bootstyle="danger")
         self.update_status("📹 视频推理进行中...", "danger")
+        model_path = self.video_model.get()
 
         def video_thread():
+            cap = None
+            error = None
             try:
-                model = YOLO(self.video_model.get())
-                cap = cv2.VideoCapture(int(source) if source == "0" else source)
+                model = YOLO(model_path)
+                cap = cv2.VideoCapture(int(source) if str(source).isdecimal() else source)
+                if not cap.isOpened():
+                    raise ValueError(f"无法打开视频源: {source}。请检查文件或摄像头权限。")
                 while self.video_loop_running and cap.isOpened():
                     ret, frame = cap.read()
                     if not ret: break
@@ -987,11 +1016,20 @@ class YOLOv8_GUI:
                     img_rgb = cv2.cvtColor(res_plotted, cv2.COLOR_BGR2RGB)
                     img_pil = Image.fromarray(img_rgb)
                     self.master.after(0, lambda i=img_pil: self.show_image_on_canvas(i, self.video_canvas))
-                cap.release()
-                self.master.after(0, lambda: self.video_status.config(text="⏸️ 已停止", bootstyle="secondary"))
-                self.master.after(0, lambda: self.update_status("✅ 视频处理完成", "success"))
             except Exception as e:
-                self.log(f"视频流错误: {e}", "ERROR")
+                error = str(e)
+                self.log(f"视频流错误: {error}", "ERROR")
+            finally:
+                if cap is not None:
+                    cap.release()
+                self.video_loop_running = False
+                self.video_worker_active = False
+                if error is not None:
+                    self.master.after(0, lambda: self.video_status.config(text="视频失败，请查看日志", bootstyle="danger"))
+                    self.master.after(0, self.update_status, "视频失败，请查看日志", "danger")
+                else:
+                    self.master.after(0, lambda: self.video_status.config(text="⏸️ 已停止", bootstyle="secondary"))
+                    self.master.after(0, self.update_status, "✅ 视频处理结束", "success")
 
         threading.Thread(target=video_thread, daemon=True).start()
 

@@ -56,6 +56,8 @@ CPU, Apple Silicon MPS, and NVIDIA CUDA examples.
   prepare them locally.
 - The GUI checks local model, dataset, image, folder, and video paths before
   launching work.
+- Failed GUI tasks report errors and reset their status; training stops its
+  progress indicator on failure. Video failures release capture resources.
 - Apple Silicon MPS has been checked with PyTorch 2.5.1, a tensor operation,
   and one temporary image inference run.
 - Planned v0.2.0 work focuses on reproducible training presets, broader device
@@ -115,6 +117,7 @@ validation images containing 822 labeled defect instances.
 - [YOLOv8s baseline experiment log](docs/experiments/yolov8s-neu-det-baseline.md)
 - [YOLOv8s v0.1.3 model card](docs/experiments/yolov8s-neu-det-v0.1.3-model-card.md)
 - [Troubleshooting](docs/troubleshooting.md)
+- [GUI smoke checklist](docs/gui-smoke.md)
 - [Roadmap](ROADMAP.md)
 - [Contributing guide](CONTRIBUTING.md)
 - [Code of conduct](CODE_OF_CONDUCT.md)

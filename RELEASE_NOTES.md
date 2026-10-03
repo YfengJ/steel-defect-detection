@@ -1,5 +1,18 @@
 # Release Notes
 
+## Unreleased
+
+- Stop reporting failed GUI subprocesses as successful and always reset the
+  training gauge after a launch error or unsuccessful exit.
+- Queue validation text updates on the Tk main thread.
+- Reset video status and release capture resources after errors; reject
+  duplicate starts and accept all numeric camera indices in the GUI.
+- Report video CLI failures with a nonzero exit code, check output-writer
+  creation, and release video resources on every exit path.
+- Cover GUI task recovery and video failures with headless regression tests.
+- Document a GUI platform smoke checklist; full Windows/Linux/macOS window
+  testing and GUI device selection remain follow-up work.
+
 ## v0.1.3 - Reproducibility And Project Clarity
 
 This maintenance release fixes two clean-environment failures found while
