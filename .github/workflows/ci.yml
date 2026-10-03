@@ -52,6 +52,8 @@ jobs:
           tests/test_repository_hygiene.py
           tests/test_path_validation.py
           tests/test_dependency_contracts.py
+          tests/test_gui_recovery.py
+          tests/test_video_predict.py
           -q
 
       - name: Run synthetic training and validation smoke test

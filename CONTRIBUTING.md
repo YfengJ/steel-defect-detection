@@ -65,6 +65,8 @@ python -m pytest \
   tests/test_repository_hygiene.py \
   tests/test_path_validation.py \
   tests/test_dependency_contracts.py \
+  tests/test_gui_recovery.py \
+  tests/test_video_predict.py \
   -q
 
 python tests/test_cli_smoke.py
@@ -81,6 +83,10 @@ vary.
 
 Python 3.10 is the CI baseline. Platform-specific changes should also include
 the local environment and manual command used for verification.
+
+The GUI callback tests exercise the task methods without opening a window;
+they do not verify Tk rendering or operating-system camera permissions. Use
+the [GUI smoke checklist](docs/gui-smoke.md) for those manual checks.
 
 ## Dependency Policy
 

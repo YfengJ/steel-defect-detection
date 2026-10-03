@@ -1,5 +1,25 @@
 # Troubleshooting
 
+## GUI Task Fails Or Stops Producing Results
+
+Read the log area for the underlying exception. Failed training, validation,
+image, and batch subprocesses now display a failure state rather than a
+success notification. The training gauge also stops when the process cannot
+start. Fix the reported model, dataset, dependency, or device error, then
+start the task again.
+
+## Video Output Is Missing
+
+`video_predict.py` exits with status 1 if the input cannot be opened, inference
+fails, or OpenCV cannot create the output writer. Create the output's parent
+directory first and check its write permissions and MP4 codec support. Try a
+short local MP4 file before testing a camera. Capture and writer resources are
+released after errors so another process can retry.
+
+The GUI accepts numeric camera indices. On macOS, allow camera access for the
+terminal or application launching Python in System Settings. See the
+[GUI smoke checklist](gui-smoke.md) for a repeatable manual check.
+
 ## Dataset Path Points To Another Checkout
 
 If an error mentions a missing dataset under an unrelated worktree or user
