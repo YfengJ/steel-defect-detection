@@ -308,6 +308,9 @@ If your annotations are VOC XML files, place them under `datasets/NEU-DET/annota
 python translate.py
 ```
 
+It writes `labels/<split>/` for every existing `images/train`, `images/val`,
+and `images/test` directory.
+
 ## Model Weights
 
 Model weights are intentionally excluded from git. Keep large artifacts locally,

@@ -40,7 +40,7 @@ jobs:
       - name: Lint maintained Python files
         run: >-
           python -m ruff check
-          train.py predict.py val.py video_predict.py path_validation.py
+          train.py predict.py val.py video_predict.py path_validation.py translate.py
           scripts tests
 
       - name: Check repository hygiene
@@ -54,6 +54,7 @@ jobs:
           tests/test_dependency_contracts.py
           tests/test_gui_recovery.py
           tests/test_video_predict.py
+          tests/test_translate.py
           -q
 
       - name: Run synthetic training and validation smoke test

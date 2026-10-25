@@ -290,6 +290,8 @@ class_id x_center y_center width height
 python translate.py
 ```
 
+脚本会为 `images/` 下已存在的 `train`、`val`、`test` 划分分别生成 `labels/<split>/` 标签。
+
 ## 模型权重
 
 模型权重不会提交到 git。大文件请保存在本地、云存储或 GitHub Releases。

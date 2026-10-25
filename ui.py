@@ -1,9 +1,7 @@
 import sys
-import os
 import threading
 import queue
 import subprocess
-import re
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
@@ -27,10 +25,10 @@ except ImportError:
 from ttkbootstrap.dialogs import Messagebox
 
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from PIL import Image, ImageTk, ImageOps, ImageDraw, ImageFont
+from matplotlib.figure import Figure
+from PIL import Image, ImageTk, ImageOps
 
 from path_validation import (
     validate_dataset_config,
@@ -65,6 +63,19 @@ COLORS = {
     'header_gradient_start': '#00adb5',
     'header_gradient_end': '#7c4dff',
 }
+
+# 子进程脚本与输出目录以仓库根目录为准，避免从其他目录启动 GUI 时找不到脚本或结果
+ROOT = Path(__file__).resolve().parent
+RUNS_DIR = ROOT / "runs" / "detect"
+
+CLASS_MAP = {0: "龟裂", 1: "夹杂", 2: "斑块", 3: "麻点", 4: "氧化铁皮", 5: "划痕"}
+
+# 日志控件最多保留的行数，防止长时间训练时内存与渲染开销持续增长
+MAX_LOG_LINES = 2000
+
+# 跨平台中文字体候选（Windows / macOS / Linux）
+CJK_FONTS = ['Microsoft YaHei', 'SimHei', 'PingFang SC', 'Heiti TC', 'Arial Unicode MS',
+             'Noto Sans CJK SC', 'WenQuanYi Micro Hei', 'DejaVu Sans']
 
 
 class YOLOv8_GUI:
@@ -122,11 +133,14 @@ class YOLOv8_GUI:
         # 状态控制
         self.video_loop_running = False
         self.video_worker_active = False
+        self.video_frame_pending = False
+        self.training_active = False
+        self.validation_active = False
         self.original_img = None
         self.current_theme = 'superhero'
 
         # 配置Matplotlib字体
-        plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei']
+        plt.rcParams['font.sans-serif'] = CJK_FONTS
         plt.rcParams['axes.unicode_minus'] = False
 
     def create_ui(self):
@@ -199,13 +213,15 @@ class YOLOv8_GUI:
         # GPU 状态检测
         try:
             import torch
-            gpu_available = torch.cuda.is_available()
-            gpu_name = torch.cuda.get_device_name(0) if gpu_available else "CPU"
-        except:
-            gpu_available = False
-            gpu_name = "CPU"
+            if torch.cuda.is_available():
+                status_text = f"🟢 GPU: {torch.cuda.get_device_name(0)}"
+            elif torch.backends.mps.is_available():
+                status_text = "🟢 GPU: Apple MPS"
+            else:
+                status_text = "🟡 CPU 模式"
+        except Exception:
+            status_text = "🟡 CPU 模式"
 
-        status_text = f"{'🟢 GPU: ' + gpu_name if gpu_available else '🟡 CPU 模式'}"
         ttk.Label(right, text=status_text,
                   font=("Segoe UI", 9),
                   bootstyle="inverse-info").pack(side=RIGHT, padx=(15, 0))
@@ -605,7 +621,8 @@ class YOLOv8_GUI:
                    bootstyle="info-outline", padding=(8, 2)).pack(side=LEFT, padx=5)
 
     def create_grid_input(self, parent, row, label, variable, is_dir=False):
-        cmd = lambda: self.browse_dir(variable) if is_dir else self.browse_file(variable)
+        def cmd():
+            return self.browse_dir(variable) if is_dir else self.browse_file(variable)
         ttk.Label(parent, text=label, font=("Microsoft YaHei", 9)).grid(
             row=row, column=0, padx=5, pady=10, sticky=E)
         ttk.Entry(parent, textvariable=variable).grid(
@@ -622,10 +639,17 @@ class YOLOv8_GUI:
         print(full_msg)
 
     def process_log_queue(self):
+        # 每个周期批量写入，并裁剪旧日志，避免训练输出刷屏时界面卡顿
+        entries = []
         while not self.log_queue.empty():
-            msg, level = self.log_queue.get()
+            entries.append(self.log_queue.get())
+        if entries:
             self.log_text.config(state='normal')
-            self.log_text.insert(tk.END, msg + "\n", level)
+            for msg, level in entries:
+                self.log_text.insert(tk.END, msg + "\n", level)
+            line_count = int(self.log_text.index('end-1c').split('.')[0])
+            if line_count > MAX_LOG_LINES:
+                self.log_text.delete('1.0', f'{line_count - MAX_LOG_LINES + 1}.0')
             self.log_text.see(tk.END)
             self.log_text.config(state='disabled')
         self.master.after(100, self.process_log_queue)
@@ -637,11 +661,13 @@ class YOLOv8_GUI:
 
     def browse_file(self, variable):
         path = filedialog.askopenfilename()
-        if path: variable.set(path)
+        if path:
+            variable.set(path)
 
     def browse_dir(self, variable):
         path = filedialog.askdirectory()
-        if path: variable.set(path)
+        if path:
+            variable.set(path)
 
     def browse_video_and_preview(self):
         """选择视频并显示第一帧预览"""
@@ -687,6 +713,9 @@ class YOLOv8_GUI:
 
     # --- 训练逻辑 ---
     def start_training(self):
+        if self.training_active:
+            self.log("训练正在进行中，请等待当前任务结束", "WARNING")
+            return
         for message in (
             validate_model_path(self.train_model.get()),
             validate_dataset_config(self.train_data.get()),
@@ -694,19 +723,21 @@ class YOLOv8_GUI:
             if message:
                 self.show_validation_error(message)
                 return
+        self.training_active = True
         self.train_gauge.pack(fill=X, pady=10)
         self.train_gauge.start()
         self.update_status("🔥 训练进行中...", "danger")
 
-        cmd = [sys.executable, "train.py",
+        cmd = [sys.executable, str(ROOT / "train.py"),
                "--model", self.train_model.get(),
                "--data", self.train_data.get(),
                "--epochs", self.train_epochs.get(),
                "--batch", self.train_batch.get(),
                "--imgsz", self.train_imgsz.get()]
-        self.log(f"🚀 启动训练进程...", "INFO")
+        self.log("🚀 启动训练进程...", "INFO")
 
         def on_finish(returncode):
+            self.training_active = False
             self.train_gauge.stop()
             self.train_gauge.pack_forget()
             if returncode:
@@ -719,6 +750,9 @@ class YOLOv8_GUI:
 
     # --- 验证逻辑 ---
     def start_validation(self):
+        if self.validation_active:
+            self.log("验证正在进行中，请等待当前任务结束", "WARNING")
+            return
         for message in (
             validate_model_path(self.val_model.get()),
             validate_dataset_config(self.val_data.get()),
@@ -727,17 +761,19 @@ class YOLOv8_GUI:
                 self.show_validation_error(message)
                 return
 
+        self.validation_active = True
         self.val_text.delete(1.0, tk.END)
         self.val_text.insert(tk.END, "⏳ 正在初始化验证进程...\n\n")
         self.update_status("📊 验证进行中...", "info")
 
         cmd = [
-            sys.executable, "val.py",
+            sys.executable, str(ROOT / "val.py"),
             "--model", self.val_model.get(),
             "--data", self.val_data.get()
         ]
 
         def on_val_finish(returncode):
+            self.validation_active = False
             if returncode:
                 self.update_status("验证失败，请查看日志", "danger")
                 return
@@ -757,22 +793,27 @@ class YOLOv8_GUI:
             self.predict_source.set(path)
             self.show_image_on_canvas(path, self.predict_canvas)
 
-    def show_image_on_canvas(self, img_path_or_pil, canvas):
+    def show_image_on_canvas(self, img_path_or_pil, canvas, resample=Image.Resampling.LANCZOS):
         try:
             if isinstance(img_path_or_pil, (str, Path)):
-                pil_img = Image.open(img_path_or_pil)
+                # 读取后立即关闭文件句柄，避免结果文件被长期占用
+                with Image.open(img_path_or_pil) as opened:
+                    pil_img = ImageOps.exif_transpose(opened)
+                    pil_img.load()
             else:
                 pil_img = img_path_or_pil
-            pil_img = ImageOps.exif_transpose(pil_img)
 
             canvas_w = canvas.winfo_width()
             canvas_h = canvas.winfo_height()
-            if canvas_w < 10: canvas_w, canvas_h = 600, 400
+            if canvas_w < 10:
+                canvas_w, canvas_h = 600, 400
 
             ratio = min(canvas_w / pil_img.width, canvas_h / pil_img.height)
             new_size = (int(pil_img.width * ratio), int(pil_img.height * ratio))
 
-            resized = pil_img.resize(new_size, Image.Resampling.LANCZOS)
+            if new_size[0] < 1 or new_size[1] < 1:
+                return
+            resized = pil_img.resize(new_size, resample)
             tk_img = ImageTk.PhotoImage(resized)
 
             canvas.delete("all")
@@ -790,36 +831,39 @@ class YOLOv8_GUI:
                 self.show_validation_error(message)
                 return
         self.update_status("🔮 检测进行中...", "info")
-        exp_name = f"single_{datetime.now().strftime('%H%M%S')}"
-        cmd = [sys.executable, "predict.py",
+        exp_name = f"single_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        # 记录启动时的输入，避免检测期间用户修改输入框导致报告读错文件
+        source = Path(self.predict_source.get())
+        cmd = [sys.executable, str(ROOT / "predict.py"),
                "--model", self.predict_model.get(),
-               "--source", self.predict_source.get(),
+               "--source", str(source),
                "--conf", self.predict_conf.get(),
-               "--name", exp_name, "--save", "--project", "runs/detect"]
+               "--name", exp_name, "--save", "--project", str(RUNS_DIR)]
 
         def on_predict_finish(returncode):
             if returncode:
                 self.update_status("单图检测失败，请查看日志", "danger")
                 return
-            save_dir = Path("runs/detect") / exp_name
-            found_imgs = list(save_dir.glob("*.jpg")) + list(save_dir.glob("*.png")) + list(save_dir.glob("*.jpeg"))
-            if found_imgs:
-                res_path = found_imgs[0]
+            save_dir = RUNS_DIR / exp_name
+            # Ultralytics 以原文件名保存结果图（保留 .bmp 等原始后缀）
+            res_path = save_dir / source.name
+            if not res_path.is_file():
+                res_path = next((p for p in sorted(save_dir.glob(f"{source.stem}.*")) if p.is_file()), None)
+            if res_path is not None:
                 self.show_image_on_canvas(res_path, self.predict_canvas)
-                txt_path = save_dir / "labels" / f"{Path(self.predict_source.get()).stem}.txt"
-                report_text = f"✅ 检测完成\n\n"
+                txt_path = save_dir / "labels" / f"{source.stem}.txt"
+                report_text = "✅ 检测完成\n\n"
                 report_text += f"📂 保存路径:\n{res_path}\n\n"
-                report_text += f"━━━━━━━━━━━━━━━\n\n"
+                report_text += "━━━━━━━━━━━━━━━\n\n"
                 if txt_path.exists():
-                    with open(txt_path, 'r') as f:
-                        lines = f.readlines()
+                    with open(txt_path, 'r', encoding='utf-8') as f:
+                        lines = [line for line in f if line.strip()]
                         report_text += f"📊 发现目标数量: {len(lines)}\n\n"
-                        class_map = {0: "龟裂", 1: "夹杂", 2: "斑块", 3: "麻点", 4: "氧化铁皮", 5: "划痕"}
                         report_text += "📋 详细检测结果:\n\n"
                         for line in lines:
                             parts = line.split()
                             cls_id = int(parts[0])
-                            cls_name = class_map.get(cls_id, f"Class {cls_id}")
+                            cls_name = CLASS_MAP.get(cls_id, f"Class {cls_id}")
                             conf = float(parts[-1]) if len(parts) > 5 else 0.0
                             report_text += f"  • {cls_name}: {conf:.1%}\n"
                 else:
@@ -845,50 +889,50 @@ class YOLOv8_GUI:
                 self.show_validation_error(message)
                 return
         self.update_status("🚀 批量处理进行中...", "info")
-        exp_name = f"batch_{datetime.now().strftime('%H%M%S')}"
-        cmd = [sys.executable, "predict.py",
+        exp_name = f"batch_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        cmd = [sys.executable, str(ROOT / "predict.py"),
                "--model", self.batch_model.get(),
                "--source", self.batch_data.get(),
-               "--name", exp_name, "--save", "--save_txt", "--project", "runs/detect"]
+               "--name", exp_name, "--save", "--save_txt", "--project", str(RUNS_DIR)]
 
         def on_batch_finish(returncode):
             if returncode:
                 self.update_status("批量检测失败，请查看日志", "danger")
                 return
             self.log("批量处理完成，开始生成分析报告...")
-            save_dir = Path("runs/detect") / exp_name / "labels"
-            if save_dir.exists():
-                self.analyze_and_report_batch(save_dir, str(Path("runs/detect") / exp_name))
-                self.update_status("✅ 批量处理完成，报告已生成", "success")
-                self.show_toast("批量完成", "报告与图表已生成", bootstyle="success")
-            else:
-                self.log("未找到标签目录，可能未检测到任何目标", "WARNING")
-                self.update_status("批量处理结束，未生成标签", "warning")
+            output_dir = RUNS_DIR / exp_name
+            label_dir = output_dir / "labels"
+            if not label_dir.exists():
+                # 没有任何检出时 Ultralytics 不会创建 labels 目录，这是正常结果而非失败
+                self.log("未检测到任何目标，生成空报告", "WARNING")
+            self.analyze_and_report_batch(label_dir, str(output_dir))
+            self.update_status("✅ 批量处理完成，报告已生成", "success")
+            self.show_toast("批量完成", "报告与图表已生成", bootstyle="success")
 
         self.run_subprocess(cmd, finish_callback=on_batch_finish)
 
     def analyze_and_report_batch(self, label_dir, output_path):
         """生成详细报告并绘制图表"""
-        for widget in self.chart_pie_frame.winfo_children(): widget.destroy()
-        for widget in self.chart_hist_frame.winfo_children(): widget.destroy()
+        for frame in (self.chart_pie_frame, self.chart_hist_frame):
+            for widget in frame.winfo_children():
+                widget.destroy()
 
+        label_files = sorted(label_dir.glob("*.txt"))
         stats = {
-            'total_files': len(list(label_dir.glob("*.txt"))),
+            'total_files': len(label_files),
             'total_defects': 0,
             'classes': defaultdict(int),
             'confidences': [],
             'areas': []
         }
 
-        class_map = {0: "龟裂", 1: "夹杂", 2: "斑块", 3: "麻点", 4: "氧化铁皮", 5: "划痕"}
-
-        for label_file in label_dir.glob("*.txt"):
-            with open(label_file, 'r') as f:
+        for label_file in label_files:
+            with open(label_file, 'r', encoding='utf-8') as f:
                 for line in f:
                     parts = line.split()
                     if len(parts) >= 1:
                         cls_id = int(parts[0])
-                        stats['classes'][class_map.get(cls_id, str(cls_id))] += 1
+                        stats['classes'][CLASS_MAP.get(cls_id, str(cls_id))] += 1
                         stats['total_defects'] += 1
                     if len(parts) >= 6:
                         stats['confidences'].append(float(parts[5]))
@@ -899,7 +943,7 @@ class YOLOv8_GUI:
         # 文本报告
         avg_conf = sum(stats['confidences']) / len(stats['confidences']) if stats['confidences'] else 0
 
-        report_text = f"📋 批量检测分析报告\n"
+        report_text = "📋 批量检测分析报告\n"
         report_text += f"{'━' * 24}\n\n"
         report_text += f"📂 输出目录:\n{output_path}\n\n"
         report_text += f"🖼️ 包含缺陷文件数: {stats['total_files']}\n"
@@ -907,14 +951,14 @@ class YOLOv8_GUI:
         report_text += f"🎯 平均置信度: {avg_conf:.2%}\n\n"
         report_text += f"{'━' * 24}\n\n"
 
-        report_text += f"📊 各类缺陷统计:\n\n"
+        report_text += "📊 各类缺陷统计:\n\n"
         for k, v in sorted(stats['classes'].items(), key=lambda x: x[1], reverse=True):
             ratio = v / stats['total_defects'] if stats['total_defects'] else 0
             bar = '█' * int(ratio * 15)
             report_text += f"  {k:<6} {bar} {v}个 ({ratio:.1%})\n"
 
         report_text += f"\n{'━' * 24}\n\n"
-        report_text += f"📏 缺陷尺寸分析:\n\n"
+        report_text += "📏 缺陷尺寸分析:\n\n"
         if stats['areas']:
             report_text += f"  最大: {max(stats['areas']):.4f}\n"
             report_text += f"  最小: {min(stats['areas']):.4f}\n"
@@ -924,58 +968,59 @@ class YOLOv8_GUI:
             report_text += "  暂无尺寸数据\n"
 
         report_text += f"\n{'━' * 24}\n\n"
-        report_text += f"📝 综合评价:\n\n"
-        if avg_conf > 0.8:
+        report_text += "📝 综合评价:\n\n"
+        if stats['total_defects'] == 0:
+            report_text += "  ✅ 批次质量极佳，未发现缺陷。\n"
+        elif avg_conf > 0.8:
             report_text += "  ✅ 置信度高，结果可靠。\n"
         elif avg_conf < 0.5:
             report_text += "  ⚠️ 置信度偏低，建议人工复核。\n"
-        if stats['total_defects'] == 0:
-            report_text += "  ✅ 批次质量极佳，未发现缺陷。\n"
+        else:
+            report_text += "  ℹ️ 置信度中等，建议抽样复核。\n"
 
         self.batch_report_text.delete(1.0, tk.END)
         self.batch_report_text.insert(tk.END, report_text)
 
-        # 绘制图表
-        plt.style.use('dark_background')
+        # 绘制图表：直接创建 Figure 而非 pyplot 图形，避免重复批量检测时图形对象累积导致内存泄漏
+        with plt.style.context('dark_background'):
+            # 饼图
+            if stats['classes']:
+                fig1 = Figure(figsize=(5, 3), dpi=100, facecolor='#0d1117')
+                ax1 = fig1.add_subplot()
+                ax1.set_facecolor('#0d1117')
+                colors = ['#00adb5', '#7c4dff', '#ff9800', '#00e676', '#ff5252', '#448aff']
+                ax1.pie(stats['classes'].values(), labels=stats['classes'].keys(),
+                        autopct='%1.1f%%', startangle=90,
+                        colors=colors[:len(stats['classes'])],
+                        textprops={'fontsize': 9, 'color': 'white'})
+                ax1.set_title("缺陷类别占比", fontsize=11, color='white', pad=10)
+                fig1.subplots_adjust(left=0.05, right=0.95, top=0.88, bottom=0.05)
 
-        # 饼图
-        if stats['classes']:
-            fig1, ax1 = plt.subplots(figsize=(5, 3), dpi=100)
-            fig1.patch.set_facecolor('#0d1117')
-            ax1.set_facecolor('#0d1117')
-            colors = ['#00adb5', '#7c4dff', '#ff9800', '#00e676', '#ff5252', '#448aff']
-            ax1.pie(stats['classes'].values(), labels=stats['classes'].keys(),
-                    autopct='%1.1f%%', startangle=90,
-                    colors=colors[:len(stats['classes'])],
-                    textprops={'fontsize': 9, 'color': 'white'})
-            ax1.set_title("缺陷类别占比", fontsize=11, color='white', pad=10)
-            plt.subplots_adjust(left=0.05, right=0.95, top=0.88, bottom=0.05)
+                canvas1 = FigureCanvasTkAgg(fig1, master=self.chart_pie_frame)
+                canvas1.draw()
+                canvas1.get_tk_widget().pack(fill=BOTH, expand=YES)
 
-            canvas1 = FigureCanvasTkAgg(fig1, master=self.chart_pie_frame)
-            canvas1.draw()
-            canvas1.get_tk_widget().pack(fill=BOTH, expand=YES)
+            # 直方图
+            if stats['confidences']:
+                fig2 = Figure(figsize=(5, 3), dpi=100, facecolor='#0d1117')
+                ax2 = fig2.add_subplot()
+                ax2.set_facecolor('#0d1117')
+                ax2.hist(stats['confidences'], bins=10, color='#00adb5', alpha=0.85,
+                         edgecolor='#1a1a2e', linewidth=1.5)
+                ax2.set_title("置信度分布", fontsize=11, color='white', pad=10)
+                ax2.set_xlabel("Confidence", fontsize=9, color='#a0a0b0')
+                ax2.set_ylabel("Count", fontsize=9, color='#a0a0b0')
+                ax2.tick_params(axis='both', which='major', labelsize=8, colors='#a0a0b0')
+                ax2.grid(True, alpha=0.15, color='#2a2a4a')
+                ax2.spines['bottom'].set_color('#2a2a4a')
+                ax2.spines['left'].set_color('#2a2a4a')
+                ax2.spines['top'].set_visible(False)
+                ax2.spines['right'].set_visible(False)
+                fig2.subplots_adjust(left=0.15, right=0.95, top=0.85, bottom=0.2)
 
-        # 直方图
-        if stats['confidences']:
-            fig2, ax2 = plt.subplots(figsize=(5, 3), dpi=100)
-            fig2.patch.set_facecolor('#0d1117')
-            ax2.set_facecolor('#0d1117')
-            ax2.hist(stats['confidences'], bins=10, color='#00adb5', alpha=0.85,
-                     edgecolor='#1a1a2e', linewidth=1.5)
-            ax2.set_title("置信度分布", fontsize=11, color='white', pad=10)
-            ax2.set_xlabel("Confidence", fontsize=9, color='#a0a0b0')
-            ax2.set_ylabel("Count", fontsize=9, color='#a0a0b0')
-            ax2.tick_params(axis='both', which='major', labelsize=8, colors='#a0a0b0')
-            ax2.grid(True, alpha=0.15, color='#2a2a4a')
-            ax2.spines['bottom'].set_color('#2a2a4a')
-            ax2.spines['left'].set_color('#2a2a4a')
-            ax2.spines['top'].set_visible(False)
-            ax2.spines['right'].set_visible(False)
-            plt.subplots_adjust(left=0.15, right=0.95, top=0.85, bottom=0.2)
-
-            canvas2 = FigureCanvasTkAgg(fig2, master=self.chart_hist_frame)
-            canvas2.draw()
-            canvas2.get_tk_widget().pack(fill=BOTH, expand=YES)
+                canvas2 = FigureCanvasTkAgg(fig2, master=self.chart_hist_frame)
+                canvas2.draw()
+                canvas2.get_tk_widget().pack(fill=BOTH, expand=YES)
 
     # --- 视频预测逻辑 ---
     def start_video_prediction(self):
@@ -996,6 +1041,7 @@ class YOLOv8_GUI:
                 return
         self.video_loop_running = True
         self.video_worker_active = True
+        self.video_frame_pending = False
         self.video_status.config(text="🔥 正在推理中...", bootstyle="danger")
         self.update_status("📹 视频推理进行中...", "danger")
         model_path = self.video_model.get()
@@ -1010,12 +1056,17 @@ class YOLOv8_GUI:
                     raise ValueError(f"无法打开视频源: {source}。请检查文件或摄像头权限。")
                 while self.video_loop_running and cap.isOpened():
                     ret, frame = cap.read()
-                    if not ret: break
+                    if not ret:
+                        break
                     results = model(frame, verbose=False)
+                    # 界面尚未绘制完上一帧时丢弃当前帧，避免 after 队列积压导致延迟和内存增长
+                    if self.video_frame_pending:
+                        continue
                     res_plotted = results[0].plot()
                     img_rgb = cv2.cvtColor(res_plotted, cv2.COLOR_BGR2RGB)
                     img_pil = Image.fromarray(img_rgb)
-                    self.master.after(0, lambda i=img_pil: self.show_image_on_canvas(i, self.video_canvas))
+                    self.video_frame_pending = True
+                    self.master.after(0, self.show_video_frame, img_pil)
             except Exception as e:
                 error = str(e)
                 self.log(f"视频流错误: {error}", "ERROR")
@@ -1032,6 +1083,11 @@ class YOLOv8_GUI:
                     self.master.after(0, self.update_status, "✅ 视频处理结束", "success")
 
         threading.Thread(target=video_thread, daemon=True).start()
+
+    def show_video_frame(self, img_pil):
+        self.video_frame_pending = False
+        # 视频帧使用更快的双线性缩放，保证实时性
+        self.show_image_on_canvas(img_pil, self.video_canvas, Image.Resampling.BILINEAR)
 
     def stop_video_prediction(self):
         self.video_loop_running = False

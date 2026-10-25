@@ -10,6 +10,18 @@
 - Report video CLI failures with a nonzero exit code, check output-writer
   creation, and release video resources on every exit path.
 - Cover GUI task recovery and video failures with headless regression tests.
+- Resolve GUI helper scripts and prediction output folders from the repository
+  root, so the GUI works when launched from another directory.
+- Find single-image results with their original suffix (for example `.bmp`),
+  report batches without detections as an empty result instead of a failure,
+  and stop contradictory batch verdicts.
+- Prevent duplicate training/validation launches, cap the GUI log at 2000
+  lines, drop stale video frames instead of queueing them, and stop leaking
+  matplotlib figures on repeated batch reports.
+- Draw video CLI labels with one color conversion per frame, keep labels inside
+  the frame, add `--conf`, and try common CJK fonts on Windows/macOS/Linux.
+- Make `translate.py` convert every existing split, tolerate a missing
+  `<difficult>` tag, and skip malformed XML without writing empty labels.
 - Document a GUI platform smoke checklist; full Windows/Linux/macOS window
   testing and GUI device selection remain follow-up work.
 
