@@ -59,14 +59,17 @@ Run these before opening a pull request:
 
 ```bash
 python -m ruff check \
-  train.py predict.py val.py video_predict.py path_validation.py scripts tests
+  train.py predict.py val.py video_predict.py path_validation.py translate.py \
+  ui.py gui_logic.py scripts tests
 
 python -m pytest \
   tests/test_repository_hygiene.py \
   tests/test_path_validation.py \
   tests/test_dependency_contracts.py \
   tests/test_gui_recovery.py \
+  tests/test_gui_logic.py \
   tests/test_video_predict.py \
+  tests/test_translate.py \
   -q
 
 python tests/test_cli_smoke.py

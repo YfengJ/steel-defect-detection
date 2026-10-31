@@ -159,7 +159,8 @@ For a complete first inference walkthrough, see
 python ui.py
 ```
 
-If Tkinter or fonts behave differently on macOS, start with command-line
-training and prediction first, then open the GUI after the environment is
-confirmed. The GUI now checks selected model, dataset, image, folder, and video
-paths before starting work.
+The GUI uses PingFang SC on macOS and offers `mps` in every device picker
+when PyTorch reports MPS support. If Tkinter or fonts behave differently on
+your machine, start with command-line training and prediction first, then open
+the GUI after the environment is confirmed. The GUI checks the selected model,
+dataset, image, folder and video paths before starting work.

@@ -2,13 +2,17 @@
 
 import ast
 from datetime import datetime
+import os
 from pathlib import Path
 import subprocess
 import sys
+import time
 from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
+
+import gui_logic
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -22,9 +26,9 @@ def gui():
     methods = {
         "run_subprocess", "start_training", "start_validation",
         "start_prediction", "start_batch_prediction", "run_video_inference",
-        "show_video_frame",
+        "show_video_frame", "_post", "_task_failed", "stop_task",
     }
-    gui_class.body = [node for node in gui_class.body if node.name in methods]
+    gui_class.body = [node for node in gui_class.body if getattr(node, "name", None) in methods]
     callbacks = []
 
     class ImmediateThread:
@@ -35,16 +39,17 @@ def gui():
             self.target()
 
     namespace = {
+        **{name: getattr(gui_logic, name) for name in dir(gui_logic) if not name.startswith("_")},
+        "os": os,
         "subprocess": subprocess,
         "sys": sys,
+        "time": time,
         "threading": SimpleNamespace(Thread=ImmediateThread),
         "Path": Path,
         "datetime": datetime,
         "tk": SimpleNamespace(END="end"),
-        "X": "x",
         "ROOT": REPO_ROOT,
         "RUNS_DIR": REPO_ROOT / "runs" / "detect",
-        "CLASS_MAP": {0: "龟裂"},
     }
     for validator in (
         "validate_model_path", "validate_dataset_config", "validate_file_source",
@@ -54,6 +59,7 @@ def gui():
     exec(compile(ast.Module(body=[gui_class], type_ignores=[]), "ui.py", "exec"), namespace)
     instance = namespace["YOLOv8_GUI"]()
     instance.master = SimpleNamespace(after=lambda delay, func, *args: callbacks.append((func, args)))
+    instance.ui_queue = SimpleNamespace(put=callbacks.append)
     instance.log = Mock()
     instance.update_status = Mock()
     instance.show_toast = Mock()
@@ -62,16 +68,33 @@ def gui():
     instance.video_worker_active = False
     instance.training_active = False
     instance.validation_active = False
+    instance._closing = False
+    instance._busy = set()
+    instance._processes = {}
+    instance._stop_requested = set()
+    for view in (
+        "show_log", "show_validation_error", "on_training_started", "on_training_finished",
+        "on_validation_started", "on_validation_finished", "show_validation_metrics",
+        "show_prediction_result", "show_batch_summary", "on_video_started", "on_video_finished",
+        "update_video_stats",
+    ):
+        setattr(instance, view, Mock())
     return instance
 
 
 def _set_inputs(gui, value="placeholder"):
     for name in (
-        "train_model", "train_data", "train_epochs", "train_batch", "train_imgsz",
-        "val_model", "val_data", "predict_model", "predict_source", "predict_conf",
-        "batch_model", "batch_data",
+        "train_model", "train_data", "train_imgsz", "val_model", "val_data",
+        "predict_model", "predict_source", "batch_model", "batch_data",
     ):
         setattr(gui, name, SimpleNamespace(get=lambda: value))
+    for name, default in (
+        ("train_epochs", "3"), ("train_batch", "4"), ("train_workers", "0"),
+        ("predict_conf", 0.25), ("batch_conf", 0.25), ("val_split", "val"),
+        ("train_device", "自动"), ("val_device", "cpu"), ("predict_device", "自动"),
+        ("batch_device", "自动"),
+    ):
+        setattr(gui, name, SimpleNamespace(get=lambda default=default: default))
 
 
 @pytest.mark.parametrize("exit_code", [0, 7])
@@ -112,9 +135,10 @@ def test_failed_task_does_not_report_success(gui, task):
 
     assert gui.update_status.call_args.args[1] == "danger"
     gui.show_toast.assert_not_called()
+    gui.show_log.assert_called_once_with(True)
     if task == "training":
-        gui.train_gauge.stop.assert_called_once()
-        gui.train_gauge.pack_forget.assert_called_once()
+        assert gui.on_training_finished.call_args.args[0] == 1
+        assert gui.training_active is False
 
 
 def test_video_open_failure_releases_capture_and_resets_state(gui):
@@ -124,7 +148,8 @@ def test_video_open_failure_releases_capture_and_resets_state(gui):
     gui.namespace["YOLO"] = Mock()
     gui.video_loop_running = False
     gui.video_model = SimpleNamespace(get=lambda: "local.pt")
-    gui.video_status = Mock()
+    gui.video_conf = SimpleNamespace(get=lambda: 0.25)
+    gui.video_device = SimpleNamespace(get=lambda: "自动")
 
     gui.run_video_inference("1")
 
@@ -159,7 +184,8 @@ def test_video_inference_failure_releases_capture(gui):
     gui.namespace["YOLO"] = Mock(return_value=model)
     gui.video_loop_running = False
     gui.video_model = SimpleNamespace(get=lambda: "local.pt")
-    gui.video_status = Mock()
+    gui.video_conf = SimpleNamespace(get=lambda: 0.25)
+    gui.video_device = SimpleNamespace(get=lambda: "自动")
 
     gui.run_video_inference("input.mp4")
 
@@ -221,9 +247,6 @@ def test_prediction_report_finds_result_with_original_suffix(gui, tmp_path):
     gui.namespace["RUNS_DIR"] = runs_dir
     _set_inputs(gui, str(tmp_path / "sample.bmp"))
     gui.run_subprocess = Mock()
-    gui.show_image_on_canvas = Mock()
-    gui.predict_canvas = object()
-    gui.predict_report = Mock()
 
     gui.start_prediction()
     cmd = gui.run_subprocess.call_args.args[0]
@@ -233,10 +256,10 @@ def test_prediction_report_finds_result_with_original_suffix(gui, tmp_path):
     (save_dir / "labels" / "sample.txt").write_text("0 0.5 0.5 0.1 0.1 0.9\n", encoding="utf-8")
     gui.run_subprocess.call_args.kwargs["finish_callback"](0)
 
-    gui.show_image_on_canvas.assert_called_once_with(save_dir / "sample.bmp", gui.predict_canvas)
-    report = gui.predict_report.insert.call_args.args[1]
-    assert "发现目标数量: 1" in report
-    assert "龟裂: 90.0%" in report
+    image_path, detections, reported_dir = gui.show_prediction_result.call_args.args
+    assert image_path == save_dir / "sample.bmp"
+    assert reported_dir == save_dir
+    assert [(d.name, d.conf) for d in detections] == [("龟裂", 0.9)]
     assert gui.update_status.call_args.args[1] == "success"
 
 
@@ -244,12 +267,12 @@ def test_batch_without_detections_still_reports(gui, tmp_path):
     gui.namespace["RUNS_DIR"] = tmp_path / "runs"
     _set_inputs(gui)
     gui.run_subprocess = Mock()
-    gui.analyze_and_report_batch = Mock()
 
     gui.start_batch_prediction()
     gui.run_subprocess.call_args.kwargs["finish_callback"](0)
 
-    gui.analyze_and_report_batch.assert_called_once()
+    summary, _output_dir = gui.show_batch_summary.call_args.args
+    assert summary.total_defects == 0
     assert gui.update_status.call_args.args[1] == "success"
 
 
@@ -257,7 +280,7 @@ def test_video_drops_frames_while_ui_is_busy(gui):
     capture = Mock()
     capture.isOpened.return_value = True
     capture.read.side_effect = [(True, "frame-1"), (True, "frame-2"), (False, None)]
-    result = Mock()
+    result = Mock(boxes=[object(), object()])
     model = Mock(return_value=[result])
     gui.namespace["cv2"] = SimpleNamespace(
         VideoCapture=Mock(return_value=capture), cvtColor=Mock(return_value="rgb"), COLOR_BGR2RGB=4,
@@ -267,13 +290,15 @@ def test_video_drops_frames_while_ui_is_busy(gui):
     )
     gui.namespace["YOLO"] = Mock(return_value=model)
     gui.video_model = SimpleNamespace(get=lambda: "local.pt")
-    gui.video_status = Mock()
+    gui.video_conf = SimpleNamespace(get=lambda: 0.4)
+    gui.video_device = SimpleNamespace(get=lambda: "cpu")
     gui.video_canvas = object()
     gui.show_image_on_canvas = Mock()
 
     gui.run_video_inference("input.mp4")
 
     assert model.call_count == 2
+    assert model.call_args.kwargs == {"conf": 0.4, "verbose": False, "device": "cpu"}
     result.plot.assert_called_once()
     frame_callbacks = [(func, args) for func, args in gui.callbacks if func == gui.show_video_frame]
     assert len(frame_callbacks) == 1
@@ -281,3 +306,102 @@ def test_video_drops_frames_while_ui_is_busy(gui):
     func(*args)
     assert gui.video_frame_pending is False
     gui.show_image_on_canvas.assert_called_once_with("pil", gui.video_canvas, "bilinear")
+    stats = gui.update_video_stats.call_args.args[0]
+    assert stats["boxes"] == 2 and stats["frames"] == 1
+
+
+def test_subprocess_runs_in_repository_root_with_unbuffered_output(gui, tmp_path):
+    lines = []
+    gui.run_subprocess(
+        [sys.executable, "-c", "import os, sys; print(os.getcwd()); print(sys.flags.dont_write_bytecode, os.environ['PYTHONUNBUFFERED'])"],
+        log_callback=lines.append,
+    )
+    for callback, args in gui.callbacks:
+        callback(*args)
+    assert Path(lines[0]).resolve() == REPO_ROOT
+    assert lines[1].endswith("1")
+
+
+def test_task_paths_are_absolute_and_options_forwarded(gui, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    _set_inputs(gui, "relative/model.pt")
+    gui.run_subprocess = Mock()
+
+    gui.start_validation()
+
+    cmd = gui.run_subprocess.call_args.args[0]
+    assert cmd[cmd.index("--model") + 1] == str(tmp_path / "relative" / "model.pt")
+    assert cmd[cmd.index("--split") + 1] == "val"
+    assert cmd[cmd.index("--device") + 1] == "cpu"
+
+
+def test_training_uses_unique_run_directory(gui):
+    _set_inputs(gui)
+    gui.run_subprocess = Mock()
+
+    gui.start_training()
+
+    cmd = gui.run_subprocess.call_args.args[0]
+    name = cmd[cmd.index("--name") + 1]
+    assert name.startswith("train_") and name != "train_result"
+    assert cmd[cmd.index("--workers") + 1] == "0"
+    assert "--device" not in cmd
+    run_dir, epochs = gui.on_training_started.call_args.args
+    assert run_dir.name == name and epochs == 3
+
+
+@pytest.mark.parametrize("field, value", [("train_epochs", "0"), ("train_batch", "x"), ("train_workers", "-1")])
+def test_training_rejects_invalid_numbers(gui, field, value):
+    _set_inputs(gui)
+    setattr(gui, field, SimpleNamespace(get=lambda: value))
+    gui.run_subprocess = Mock()
+
+    gui.start_training()
+
+    gui.run_subprocess.assert_not_called()
+    gui.show_validation_error.assert_called_once()
+    assert gui.training_active is False
+
+
+def test_stopped_training_reports_stop_instead_of_failure(gui):
+    _set_inputs(gui)
+    gui.run_subprocess = Mock()
+    process = Mock()
+    process.poll.return_value = None
+    gui._processes["train"] = process
+
+    gui.start_training()
+    gui.stop_task("train")
+    process.terminate.assert_called_once()
+    gui.run_subprocess.call_args.kwargs["finish_callback"](-15)
+
+    assert gui.update_status.call_args.args[1] == "warning"
+    gui.show_log.assert_not_called()
+    assert "train" not in gui._stop_requested
+
+
+def test_validation_metrics_line_updates_view(gui):
+    _set_inputs(gui)
+    gui.run_subprocess = Mock()
+
+    gui.start_validation()
+    on_line = gui.run_subprocess.call_args.kwargs["log_callback"]
+    on_line("mAP50 : 0.7")
+    on_line('METRICS_JSON {"precision": 0.7, "classes": []}')
+
+    gui.show_validation_metrics.assert_called_once_with({"precision": 0.7, "classes": []})
+
+
+def test_post_is_ignored_after_close(gui):
+    gui._closing = True
+    gui._post(print, "late")
+    assert gui.callbacks == []
+
+
+def test_worker_updates_never_touch_tk_from_other_threads(gui):
+    # Non-threaded Tcl builds silently drop after() calls made from worker threads.
+    gui.master = SimpleNamespace(after=Mock())
+    func = Mock()
+    gui._post(func, 1)
+    gui.master.after.assert_not_called()
+    assert gui.callbacks == [(func, (1,))]

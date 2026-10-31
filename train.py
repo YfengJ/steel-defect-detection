@@ -17,6 +17,10 @@ def parse_args():
         default=None,
         help='训练设备，例如 cpu、mps、cuda 或 CUDA 编号 0'
     )
+    parser.add_argument('--workers', type=int, default=2, help='数据加载进程数，Windows 报错时设为 0')
+    parser.add_argument('--project', type=str, default='runs/detect', help='保存根目录')
+    parser.add_argument('--name', type=str, default='train_result', help='实验名称，已存在时自动追加序号')
+    parser.add_argument('--exist-ok', action='store_true', help='复用已存在的实验目录（会覆盖旧权重）')
     return parser.parse_args()
 
 
@@ -44,9 +48,11 @@ def main():
                 'epochs': args.epochs,
                 'imgsz': args.imgsz,
                 'batch': args.batch,
-                'workers': 2,  # Windows下如果报错，设为0
-                'exist_ok': True,
-                'name': 'train_result'
+                'workers': args.workers,
+                'project': args.project,
+                'name': args.name,
+                # 默认不复用旧目录：Ultralytics 会把新指标追加到旧 results.csv 并覆盖旧权重
+                'exist_ok': args.exist_ok,
             }
             if args.device:
                 train_kwargs['device'] = args.device
