@@ -2,11 +2,24 @@
 
 ## GUI Task Fails Or Stops Producing Results
 
-Read the log area for the underlying exception. Failed training, validation,
-image, and batch subprocesses now display a failure state rather than a
-success notification. The training gauge also stops when the process cannot
-start. Fix the reported model, dataset, dependency, or device error, then
-start the task again.
+When a task fails, the log panel opens on its own and the status bar turns red.
+Read the last lines for the underlying exception. Failed training, validation,
+image and batch subprocesses never show a success notification. Fix the
+reported model, dataset, dependency or device error, then start the task
+again. A running training job can be stopped with **停止**. Closing the window
+asks before it terminates running tasks.
+
+If the log looks frozen during long jobs, update to v0.2.0 or newer. Earlier
+versions read subprocess output with Python's default pipe buffering, so the
+log arrived in large delayed chunks.
+
+## Training Metrics Look Duplicated Or Weights Changed
+
+Before v0.2.0, `train.py` always wrote to `runs/detect/train_result` with
+`exist_ok=True`. A second run therefore overwrote the previous weights and
+appended its epochs to the old `results.csv`, which shows up as repeated epoch
+numbers. Current versions create `train_result2`, `train_result3`, … unless you
+pass `--exist-ok`. The GUI uses a timestamped run name for every run.
 
 ## Video Output Is Missing
 
@@ -16,7 +29,7 @@ directory first and check its write permissions and MP4 codec support. Try a
 short local MP4 file before testing a camera. Capture and writer resources are
 released after errors so another process can retry.
 
-The GUI accepts numeric camera indices. On macOS, allow camera access for the
+The GUI accepts numeric camera indices (set the index next to **打开摄像头**). On macOS, allow camera access for the
 terminal or application launching Python in System Settings. See the
 [GUI smoke checklist](gui-smoke.md) for a repeatable manual check.
 

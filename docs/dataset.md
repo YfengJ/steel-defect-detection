@@ -69,6 +69,11 @@ If your annotations are VOC XML files, place them in `datasets/NEU-DET/annotatio
 python translate.py
 ```
 
+The script converts every split that exists under `images/` (`train`, `val`,
+`test`) into the matching `labels/<split>/` directory. Objects without a
+`<difficult>` tag are treated as not difficult, and malformed XML files are
+reported and skipped instead of producing empty labels.
+
 Review the generated label files before training.
 
 ## What Not to Commit

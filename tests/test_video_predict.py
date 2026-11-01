@@ -85,3 +85,25 @@ def test_cli_exits_unsuccessfully_on_video_failure(monkeypatch):
     with pytest.raises(SystemExit) as error:
         exec(compile(ast.Module(body=[entrypoint], type_ignores=[]), str(source_path), "exec"), namespace)
     assert error.value.code == 1
+
+
+def test_labels_are_drawn_with_one_color_conversion_per_frame(video_runtime, monkeypatch):
+    import numpy as np
+
+    capture, writer, model = video_runtime
+    frame = np.zeros((64, 64, 3), dtype=np.uint8)
+    capture.read.side_effect = [(True, frame), (False, None)]
+    boxes = [
+        SimpleNamespace(xyxy=[[0, 0, 10, 10]], cls=[0], conf=[0.9]),
+        SimpleNamespace(xyxy=[[20, 20, 40, 40]], cls=[0], conf=[0.8]),
+    ]
+    model.return_value = [SimpleNamespace(boxes=boxes)]
+    model.names = {0: "crazing"}
+    convert = Mock(side_effect=lambda image, code: image)
+    monkeypatch.setattr(cv2, "cvtColor", convert)
+
+    VideoPredictor.run("local.pt", "input.mp4", conf=0.4)
+
+    assert model.call_args.kwargs["conf"] == 0.4
+    assert convert.call_count == 2
+    writer.write.assert_called_once()

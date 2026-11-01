@@ -1,17 +1,85 @@
 # Release Notes
 
-## Unreleased
+## v0.2.0 - Desktop Redesign And Workflow Hardening
 
-- Stop reporting failed GUI subprocesses as successful and always reset the
-  training gauge after a launch error or unsuccessful exit.
-- Queue validation text updates on the Tk main thread.
-- Reset video status and release capture resources after errors; reject
-  duplicate starts and accept all numeric camera indices in the GUI.
-- Report video CLI failures with a nonzero exit code, check output-writer
-  creation, and release video resources on every exit path.
-- Cover GUI task recovery and video failures with headless regression tests.
-- Document a GUI platform smoke checklist; full Windows/Linux/macOS window
-  testing and GUI device selection remain follow-up work.
+This release rebuilds the desktop GUI and fixes several workflow bugs found in
+a full project review. The YOLO core, dataset format and CLI defaults stay
+compatible with v0.1.3.
+
+### Redesigned GUI
+
+- Replace the tabbed layout with a sidebar workspace. Each page has a settings
+  panel and a results area.
+- Add dark and light themes registered by the app. They work on ttkbootstrap
+  1.x and 2.x. Fonts are chosen per platform (PingFang SC, Microsoft YaHei UI,
+  Noto Sans CJK), with no emoji glyphs.
+- Add a device picker (auto / cpu / mps / CUDA) and a confidence slider to every
+  page that runs a model.
+- **Single image:** switch between the original and the annotated image. A table
+  lists every detection's class, confidence and area.
+- **Batch:** stat tiles, class and confidence charts, a verdict, and a
+  per-image table. Double-click a row to open its result. Images without
+  detections now count as processed images.
+- **Video:** FPS, per-frame defects and processed-frame counters, a camera index
+  input, and confidence and device options.
+- **Training:** an epoch counter, a progress bar, elapsed and remaining time,
+  latest P/R/mAP tiles, and live mAP and loss curves read from `results.csv`.
+  A **Stop** button ends the run.
+- **Validation:** metric tiles and a per-class precision, recall and mAP table.
+- Show notifications inside the app, open the log panel automatically on
+  failure, and repaint images when the window is resized.
+
+### Fixes
+
+- Fix GUI tasks that never reported completion on Python builds with
+  non-threaded Tcl, such as the uv/python-build-standalone builds common on
+  macOS. Worker threads called `after()` directly; Tk accepted the call, but
+  the callback never ran. Worker threads now pass all UI updates through a
+  queue that the Tk main loop drains.
+- Replace comboboxes with menu buttons. Tk 9 on macOS renders combobox dropdowns
+  as native menus, which made ttkbootstrap 1.x fail whenever the theme changed.
+- `train.py` no longer reuses `runs/detect/train_result` with `exist_ok=True`.
+  Before, a second run overwrote the old weights and appended its epochs to the
+  old `results.csv`. New runs are numbered automatically; `--exist-ok` restores
+  the old behavior on purpose.
+- GUI subprocesses run unbuffered from the repository root, so logs stream in
+  real time. Relative paths are resolved before launch, so training output no
+  longer lands in whatever directory the GUI was started from.
+- Closing the window asks before it terminates running tasks, so training no
+  longer keeps running as an orphan. Background threads stop posting to a
+  destroyed window.
+- Confidence, epoch, batch and worker values are validated before launch.
+- Intermediate tqdm progress lines no longer flood the GUI log.
+- Single-image results with non-jpg/png suffixes (for example `.bmp`) are found.
+  Batches with zero detections count as a valid empty result, and duplicate
+  training/validation launches are blocked.
+- `video_predict.py` draws labels with one color conversion per frame and
+  keeps labels inside the frame. It adds `--conf` and tries common CJK fonts on
+  every platform.
+- `translate.py` converts every existing split. It tolerates a missing
+  `<difficult>` tag and skips malformed XML without writing empty labels.
+- Stopped and failed GUI tasks reset their state. Video failures release
+  capture resources.
+
+### CLI Additions
+
+- `train.py`: `--workers`, `--project`, `--name`, `--exist-ok`.
+- `val.py`: `--split`, `--device`, precision and recall in the summary, and a
+  machine-readable `METRICS_JSON` line.
+
+### Quality
+
+- Move the GUI's file and parsing logic into the display-free `gui_logic.py`,
+  with dedicated unit tests.
+- CI now lints `ui.py` and `gui_logic.py` and runs the new tests.
+- Regenerate the README screenshots from the new GUI, using the v0.1.3
+  baseline weight and NEU-DET validation images.
+
+### Known Limitations
+
+- Windows click-through and CUDA device selection in the GUI have not been
+  tested on real hardware yet. See [docs/gui-smoke.md](docs/gui-smoke.md).
+- The trained baseline weight is still not published.
 
 ## v0.1.3 - Reproducibility And Project Clarity
 

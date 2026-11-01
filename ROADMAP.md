@@ -40,24 +40,32 @@ learning-oriented open source project maintained in spare time.
 - Run the complete health check automatically every week.
 - Put a real result image and shortest inference path near the README top.
 
-## v0.2.0 - Reproducible Training Workflow
+## v0.2.0 - Desktop Redesign And Workflow Hardening
+
+- Rebuild the GUI as a sidebar workspace with dark and light themes.
+- Add a GUI device selector and clearer failure and stop states for every task
+  that runs as a subprocess.
+- Add focused tests for subprocess completion, output directory reporting, and
+  display-free GUI logic.
+- Give every training run its own output directory so repeated experiments are
+  easy to compare and never overwrite each other.
+- Show live training curves and per-class validation metrics in the GUI.
+
+## v0.3.0 - Reproducible Training Workflow
 
 - Provide a small sample `dataset.yaml` and clearer dataset layout checks.
 - Add a tiny runtime fixture or scripted public download for repeatable CPU
   inference without committing assets.
 - Document recommended training presets for CPU, Apple Silicon MPS, and CUDA.
-- Add focused tests for subprocess completion and output directory reporting.
-- Improve generated output naming so repeated experiments are easier to compare.
 
-## v0.3.0 - Usability and Release Quality
+## v0.4.0 - Usability and Release Quality
 
 - Add a minimal demo dataset or scripted sample download that does not commit
   dataset files.
 - Use the model card template for any released trained weights.
-- Add screenshots or short demo media generated from public sample images.
+- Add short demo media generated from public sample images.
 - Add a release checklist covering CI, docs, dataset instructions, and weight
   publishing.
-- Add a GUI device selector and clearer runtime failure state after subprocesses
-  exit unsuccessfully.
+- Package the GUI as a standalone desktop build for Windows and macOS.
 - Decide whether to keep vendoring Ultralytics or migrate to a separately pinned
   package after compatibility tests and packaging review.
