@@ -86,7 +86,7 @@ def validate_github_yaml(repo_root: Path, paths: list[Path]) -> list[str]:
         try:
             yaml.safe_load(path.read_text(encoding="utf-8"))
         except yaml.YAMLError as exc:
-            failures.append(f"GitHub YAML syntax error in {relative_path}: {exc}")
+            failures.append(f"GitHub YAML syntax error in {relative_path.as_posix()}: {exc}")
     return failures
 
 
@@ -101,22 +101,22 @@ def main() -> int:
         suffix = relative_path.suffix.lower()
 
         if parts & BANNED_DIRS:
-            failures.append(f"Tracked local artifact directory: {relative_path}")
+            failures.append(f"Tracked local artifact directory: {relative_path.as_posix()}")
 
         if suffix in BANNED_SUFFIXES:
-            failures.append(f"Tracked model or exported weight file: {relative_path}")
+            failures.append(f"Tracked model or exported weight file: {relative_path.as_posix()}")
 
         if path.exists() and path.is_file():
             size = path.stat().st_size
             if size > MAX_TRACKED_FILE_BYTES:
                 failures.append(
-                    f"Tracked file exceeds 20 MB: {relative_path} ({size} bytes)"
+                    f"Tracked file exceeds 20 MB: {relative_path.as_posix()} ({size} bytes)"
                 )
 
             if is_text_like(relative_path) and suffix not in CRLF_SUFFIXES:
                 data = path.read_bytes()
                 if b"\r\n" in data or b"\r" in data:
-                    failures.append(f"Text file contains CR line endings: {relative_path}")
+                    failures.append(f"Text file contains CR line endings: {relative_path.as_posix()}")
 
     failures.extend(validate_github_yaml(repo_root, files))
 
