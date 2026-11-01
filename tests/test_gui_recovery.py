@@ -50,6 +50,7 @@ def gui():
         "tk": SimpleNamespace(END="end"),
         "ROOT": REPO_ROOT,
         "RUNS_DIR": REPO_ROOT / "runs" / "detect",
+        "PYTHON": sys.executable,
     }
     for validator in (
         "validate_model_path", "validate_dataset_config", "validate_file_source",
@@ -144,7 +145,7 @@ def test_failed_task_does_not_report_success(gui, task):
 def test_video_open_failure_releases_capture_and_resets_state(gui):
     capture = Mock()
     capture.isOpened.return_value = False
-    gui.namespace["cv2"] = SimpleNamespace(VideoCapture=Mock(return_value=capture))
+    gui.namespace["open_video_capture"] = Mock(return_value=capture)
     gui.namespace["YOLO"] = Mock()
     gui.video_loop_running = False
     gui.video_model = SimpleNamespace(get=lambda: "local.pt")
@@ -154,7 +155,7 @@ def test_video_open_failure_releases_capture_and_resets_state(gui):
     gui.run_video_inference("1")
 
     assert gui.video_loop_running is False
-    gui.namespace["cv2"].VideoCapture.assert_called_once_with(1)
+    gui.namespace["open_video_capture"].assert_called_once_with("1")
     capture.release.assert_called_once()
     for callback, args in gui.callbacks:
         callback(*args)
@@ -180,7 +181,7 @@ def test_video_inference_failure_releases_capture(gui):
     capture.isOpened.return_value = True
     capture.read.return_value = (True, object())
     model = Mock(side_effect=RuntimeError("device unavailable"))
-    gui.namespace["cv2"] = SimpleNamespace(VideoCapture=Mock(return_value=capture))
+    gui.namespace["open_video_capture"] = Mock(return_value=capture)
     gui.namespace["YOLO"] = Mock(return_value=model)
     gui.video_loop_running = False
     gui.video_model = SimpleNamespace(get=lambda: "local.pt")
@@ -282,9 +283,8 @@ def test_video_drops_frames_while_ui_is_busy(gui):
     capture.read.side_effect = [(True, "frame-1"), (True, "frame-2"), (False, None)]
     result = Mock(boxes=[object(), object()])
     model = Mock(return_value=[result])
-    gui.namespace["cv2"] = SimpleNamespace(
-        VideoCapture=Mock(return_value=capture), cvtColor=Mock(return_value="rgb"), COLOR_BGR2RGB=4,
-    )
+    gui.namespace["open_video_capture"] = Mock(return_value=capture)
+    gui.namespace["cv2"] = SimpleNamespace(cvtColor=Mock(return_value="rgb"), COLOR_BGR2RGB=4)
     gui.namespace["Image"] = SimpleNamespace(
         fromarray=Mock(return_value="pil"), Resampling=SimpleNamespace(BILINEAR="bilinear"),
     )

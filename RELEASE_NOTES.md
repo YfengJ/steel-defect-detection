@@ -1,5 +1,40 @@
 # Release Notes
 
+## v0.2.1 - Windows Support
+
+This release makes Windows a first-class platform for the desktop GUI and the
+CLI scripts. Behavior on macOS and Linux is unchanged.
+
+### Windows
+
+- Add `scripts\windows\setup.bat`, which creates `.venv` and installs the
+  dependencies, with an optional `cuda` argument for the CUDA 12.1 PyTorch
+  build. Add `start_gui.bat`, which starts the GUI without a console window.
+- Declare DPI awareness, so text stays sharp on scaled displays. Size the
+  window to the screen, the taskbar and the DPI scale, and give the app its own
+  taskbar entry.
+- Run training, validation and prediction subprocesses without console
+  windows, and with `python.exe` even when the GUI runs under `pythonw.exe`.
+- **停止** and closing the window end the whole process tree with
+  `taskkill /T`, so DataLoader workers no longer linger and hold GPU memory.
+- Open camera indices through DirectShow, falling back to the default backend.
+- Add the [Windows guide](docs/windows.md) and a Windows troubleshooting entry.
+
+### Fixes
+
+- All CLI scripts now write UTF-8 output. On Windows, redirecting their output
+  to a pipe or file (for example `predict.py --help > help.txt`) used the ANSI
+  code page and crashed with `UnicodeEncodeError` on Chinese text or emoji.
+
+### Quality
+
+- Add a `windows-latest` CI job that runs the unit, GUI-callback, CLI and
+  synthetic training smoke tests.
+- Add `tests/test_gui_startup.py`, which opens the real window and builds every
+  page in both themes. It runs on macOS and Windows and is skipped where no
+  display exists.
+- Add tests for the platform helpers and the UTF-8 output fix.
+
 ## v0.2.0 - Desktop Redesign And Workflow Hardening
 
 This release rebuilds the desktop GUI and fixes several workflow bugs found in

@@ -3,6 +3,8 @@ import sys
 from pathlib import Path
 import time
 
+from cli_support import use_utf8_output
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Run YOLOv8 prediction on an image, video, or folder.')
@@ -67,4 +69,5 @@ def main():
 
 
 if __name__ == '__main__':
+    use_utf8_output()
     main()

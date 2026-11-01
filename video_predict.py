@@ -1,6 +1,8 @@
 import argparse
 import math
 
+from cli_support import use_utf8_output
+
 # 中文字体候选（Windows / macOS / Linux），找不到时回退到 PIL 默认字体
 FONT_CANDIDATES = (
     "simhei.ttf",
@@ -38,10 +40,12 @@ class VideoPredictor:
             import numpy as np
             from PIL import Image, ImageDraw
 
+            from gui_logic import open_video_capture
+
             model = YOLO(model_path)
 
             # 打开视频
-            cap = cv2.VideoCapture(int(source) if str(source).isdigit() else source)
+            cap = open_video_capture(source)
             if not cap.isOpened():
                 raise ValueError(f"无法打开视频源: {source}")
 
@@ -108,6 +112,7 @@ class VideoPredictor:
 
 
 if __name__ == "__main__":
+    use_utf8_output()
     parser = argparse.ArgumentParser(description='Run YOLOv8 inference on a video file or camera source.')
     parser.add_argument('model', help='模型权重路径，例如 runs/detect/train_result/weights/best.pt')
     parser.add_argument('source', help='视频路径或摄像头编号，例如 0')

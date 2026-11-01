@@ -9,6 +9,8 @@ from __future__ import annotations
 import csv
 import json
 import re
+import subprocess
+import sys
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -232,3 +234,77 @@ def is_progress_noise(line: str) -> bool:
 
 def format_conf(conf: float | None) -> str:
     return "—" if conf is None else f"{conf:.1%}"
+
+
+# ---------------------------------------------------------------- platform helpers
+
+# subprocess.CREATE_NO_WINDOW 只在 Windows 版 Python 上存在，这里写死数值以便在任何平台测试
+CREATE_NO_WINDOW = 0x08000000
+
+
+def is_windows(platform: str | None = None) -> bool:
+    return (platform or sys.platform).startswith("win")
+
+
+def python_executable(executable: str | None = None) -> str:
+    """Interpreter for child scripts: python.exe instead of pythonw.exe, so stdout can be piped."""
+    executable = executable or sys.executable
+    path = Path(executable)
+    if path.name.lower() == "pythonw.exe":
+        console = path.with_name("python.exe")
+        if console.exists():
+            return str(console)
+    return executable
+
+
+def subprocess_options(platform: str | None = None) -> dict:
+    """Extra Popen kwargs: on Windows, children get no console window of their own."""
+    return {"creationflags": CREATE_NO_WINDOW} if is_windows(platform) else {}
+
+
+def stop_process_tree(process, platform: str | None = None) -> None:
+    """Stop a child and everything it spawned (training starts DataLoader worker processes)."""
+    if process.poll() is not None:
+        return
+    if is_windows(platform):
+        # terminate() 在 Windows 上只结束父进程，DataLoader worker 会残留并占用显存
+        result = subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                                capture_output=True, **subprocess_options(platform))
+        if result.returncode == 0:
+            return
+    process.terminate()
+
+
+def video_source(value: object) -> int | str:
+    """Camera index for digit strings ("0"), otherwise the path as given."""
+    text = str(value).strip()
+    return int(text) if text.isdecimal() else text
+
+
+def open_video_capture(value: object, platform: str | None = None):
+    """Open a file or camera; Windows cameras use DirectShow, which opens far faster than MSMF."""
+    import cv2
+
+    source = video_source(value)
+    if isinstance(source, int) and is_windows(platform):
+        capture = cv2.VideoCapture(source, cv2.CAP_DSHOW)
+        if capture.isOpened():
+            return capture
+        capture.release()
+    return cv2.VideoCapture(source)
+
+
+def window_geometry(screen_w: int, screen_h: int, scale: float = 1.0,
+                    size: tuple[int, int] = (1400, 900),
+                    minimum: tuple[int, int] = (1180, 760)) -> tuple[int, int, int, int]:
+    """Window and minimum size in pixels, scaled for DPI and kept inside the screen.
+
+    The height margin leaves room for the Windows taskbar and the macOS menu bar.
+    """
+    scale = max(scale, 1.0)
+    max_w, max_h = int(screen_w * 0.94), int(screen_h * 0.88)
+    width = min(int(size[0] * scale), max_w)
+    height = min(int(size[1] * scale), max_h)
+    min_w = min(int(minimum[0] * scale), width)
+    min_h = min(int(minimum[1] * scale), height)
+    return width, height, min_w, min_h

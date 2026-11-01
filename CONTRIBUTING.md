@@ -60,7 +60,7 @@ Run these before opening a pull request:
 ```bash
 python -m ruff check \
   train.py predict.py val.py video_predict.py path_validation.py translate.py \
-  ui.py gui_logic.py scripts tests
+  ui.py gui_logic.py cli_support.py scripts tests
 
 python -m pytest \
   tests/test_repository_hygiene.py \
@@ -70,6 +70,8 @@ python -m pytest \
   tests/test_gui_logic.py \
   tests/test_video_predict.py \
   tests/test_translate.py \
+  tests/test_cli_support.py \
+  tests/test_gui_startup.py \
   -q
 
 python tests/test_cli_smoke.py
@@ -84,11 +86,15 @@ checkpoint. All data and outputs use pytest's temporary directory. It added
 about 16 seconds on the maintainer's Apple Silicon CPU; hosted CI timing may
 vary.
 
-Python 3.10 is the CI baseline. Platform-specific changes should also include
-the local environment and manual command used for verification.
+Python 3.10 is the CI baseline. CI runs the same checks on Ubuntu and Windows.
+Platform-specific changes should also include the local environment and manual
+command used for verification.
 
-The GUI callback tests exercise the task methods without opening a window;
-they do not verify Tk rendering or operating-system camera permissions. Use
+The GUI callback tests exercise the task methods without opening a window.
+`tests/test_gui_startup.py` opens the real window, builds every page in both
+themes and closes it; it is skipped where no display is available (the Linux
+CI job). Neither covers rendering details or operating-system camera
+permissions. Use
 the [GUI smoke checklist](docs/gui-smoke.md) for those manual checks.
 
 ## Dependency Policy

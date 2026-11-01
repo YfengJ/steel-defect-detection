@@ -7,6 +7,7 @@
 [![CI](https://github.com/YfengJ/steel-defect-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/YfengJ/steel-defect-detection/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/YfengJ/steel-defect-detection)](https://github.com/YfengJ/steel-defect-detection/releases)
 ![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11-blue?logo=python&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 ![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics%208.0.182-purple)
 ![Dataset](https://img.shields.io/badge/Dataset-NEU--DET-orange)
 ![License](https://img.shields.io/badge/License-AGPL--3.0-red)
@@ -19,13 +20,13 @@ VOC 标注转换、训练、验证、图片/文件夹/视频检测，以及在�
 
 ## 功能亮点
 
-- **桌面应用**：左侧导航工作台，支持深色和浅色主题，每个页面都能选择 CPU / Apple MPS / CUDA。
+- **桌面应用**：左侧导航工作台，支持深色和浅色主题，每个页面都能选择 CPU / Apple MPS / CUDA。支持 Windows、macOS 和 Linux，Windows 提供一键安装和启动脚本。
 - **单图检测**：可在原图和检测结果间切换，逐条列出缺陷的置信度和面积占比。
 - **批量检测**：给出文件夹级统计、类别分布图、置信度分布图和逐图明细；双击一行即可打开对应结果图。
 - **视频与摄像头**：实时推理并自动丢弃积压帧，显示 FPS 和当前帧缺陷数。
 - **模型训练**：每次训练写入独立目录，并根据 `results.csv` 实时绘制 mAP 和损失曲线；可在应用内停止训练。
 - **模型验证**：显示整体 Precision / Recall / mAP，以及从 `val.py` 解析出的各类别结果。
-- **命令行脚本**：每一步都有对应脚本，并在 CI 中测试（Ruff、单元测试、CLI smoke 测试、合成数据 CPU 训练/验证）。
+- **命令行脚本**：每一步都有对应脚本，并在 CI 中测试（Ruff、单元测试、CLI smoke 测试、合成数据 CPU 训练/验证），覆盖 Linux 和 Windows。
 
 ## 快速开始
 
@@ -37,6 +38,9 @@ source venv/bin/activate          # Windows: venv\Scripts\activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
+
+Windows 用户也可以直接运行 `scripts\windows\setup.bat`（有 NVIDIA 显卡时加 `cuda` 参数），
+然后双击 `start_gui.bat` 启动，详见 [docs/windows.md](docs/windows.md)。
 
 启动 GUI：
 
@@ -51,7 +55,7 @@ python predict.py --model /path/to/trusted-best.pt --source /path/to/image.jpg -
 ```
 
 结果保存在 `runs/detect/<name>/`。只加载来源可信的权重：PyTorch checkpoint 可能包含序列化的
-Python 对象。macOS 用户请先阅读 [docs/macos.md](docs/macos.md)。如果想先不准备数据集跑通一次，
+Python 对象。平台说明见 [Windows](docs/windows.md) 和 [macOS](docs/macos.md)。如果想先不准备数据集跑通一次，
 请参考 [docs/sample_inference.md](docs/sample_inference.md)。
 
 ## 界面一览
@@ -179,7 +183,10 @@ steel-defect-detection/
 ├── video_predict.py       # 视频与摄像头推理 CLI
 ├── translate.py           # VOC XML → YOLO TXT 转换
 ├── path_validation.py     # 本地路径与数据集 YAML 检查
+├── cli_support.py         # CLI 公共工具（UTF-8 控制台输出）
 ├── dataset.yaml           # 默认数据集配置
+├── start_gui.bat          # Windows GUI 启动脚本（不弹控制台窗口）
+├── scripts/windows/       # Windows 一键安装脚本
 ├── requirements*.txt      # 运行与开发依赖
 ├── tests/                 # 单元、GUI 回调、CLI 与训练 smoke 测试
 ├── docs/                  # 安装、数据集、实验与维护文档
@@ -199,7 +206,7 @@ steel-defect-detection/
 
 ## 项目文档
 
-- [macOS / Apple Silicon](docs/macos.md) · [示例推理](docs/sample_inference.md) ·
+- [Windows](docs/windows.md) · [macOS / Apple Silicon](docs/macos.md) · [示例推理](docs/sample_inference.md) ·
   [数据集准备](docs/dataset.md) · [常见问题](docs/troubleshooting.md)
 - [基线实验日志](docs/experiments/yolov8s-neu-det-baseline.md) ·
   [v0.1.3 模型卡](docs/experiments/yolov8s-neu-det-v0.1.3-model-card.md) ·
