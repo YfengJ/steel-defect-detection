@@ -2,6 +2,7 @@ import argparse
 import json
 import sys
 
+from cli_support import use_utf8_output
 from path_validation import resolved_dataset_config_path
 
 
@@ -87,4 +88,5 @@ def main():
 
 
 if __name__ == '__main__':
+    use_utf8_output()
     main()

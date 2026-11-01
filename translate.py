@@ -4,6 +4,8 @@ from pathlib import Path
 
 from tqdm import tqdm
 
+from cli_support import use_utf8_output
+
 # 定义数据集类别
 CLASSES = ["crazing", "inclusion", "patches", "pitted_surface", "rolled-in_scale", "scratches"]
 IMAGE_SUFFIXES = {".bmp", ".jpg", ".jpeg", ".png", ".tif", ".tiff"}
@@ -93,4 +95,5 @@ def main(root_dir=Path('datasets/NEU-DET')):
 
 
 if __name__ == "__main__":
+    use_utf8_output()
     sys.exit(main())

@@ -15,6 +15,7 @@ def run_help(script_name: str) -> subprocess.CompletedProcess[str]:
         [sys.executable, str(REPO_ROOT / script_name), "--help"],
         cwd=REPO_ROOT,
         text=True,
+        encoding="utf-8",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,

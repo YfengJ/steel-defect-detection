@@ -81,6 +81,7 @@ def test_cli_exits_unsuccessfully_on_video_failure(monkeypatch):
         "__name__": "__main__",
         "argparse": argparse,
         "VideoPredictor": SimpleNamespace(run=Mock(side_effect=OSError("writer failed"))),
+        "use_utf8_output": Mock(),
     }
     with pytest.raises(SystemExit) as error:
         exec(compile(ast.Module(body=[entrypoint], type_ignores=[]), str(source_path), "exec"), namespace)

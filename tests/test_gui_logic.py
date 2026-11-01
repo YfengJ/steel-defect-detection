@@ -1,4 +1,6 @@
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 
@@ -16,8 +18,13 @@ from gui_logic import (
     parse_label_file,
     parse_metrics_line,
     parse_positive_int,
+    python_executable,
     read_training_progress,
+    stop_process_tree,
+    subprocess_options,
     summarize_batch,
+    video_source,
+    window_geometry,
 )
 
 
@@ -141,3 +148,91 @@ def test_progress_noise_filter():
     assert is_progress_noise("  1/50  2.1G  1.2  45%|████▌     | 9/20 [00:03<00:04]")
     assert not is_progress_noise("  1/50  2.1G  1.2 100%|██████████| 20/20 [00:07<00:00]")
     assert not is_progress_noise("✅ 预测完成，耗时 1.20s")
+
+
+def test_python_executable_prefers_console_interpreter_next_to_pythonw(tmp_path):
+    (tmp_path / "pythonw.exe").write_bytes(b"")
+    assert python_executable(str(tmp_path / "pythonw.exe")) == str(tmp_path / "pythonw.exe")
+    (tmp_path / "python.exe").write_bytes(b"")
+    assert python_executable(str(tmp_path / "pythonw.exe")) == str(tmp_path / "python.exe")
+    assert python_executable("/usr/bin/python3") == "/usr/bin/python3"
+
+
+def test_subprocess_options_hide_console_only_on_windows():
+    assert subprocess_options("win32") == {"creationflags": gui_logic.CREATE_NO_WINDOW}
+    assert subprocess_options("darwin") == {}
+    assert subprocess_options("linux") == {}
+
+
+def test_stop_process_tree_uses_taskkill_on_windows(monkeypatch):
+    run = Mock(return_value=SimpleNamespace(returncode=0))
+    monkeypatch.setattr(gui_logic.subprocess, "run", run)
+    process = Mock(pid=4321)
+    process.poll.return_value = None
+
+    stop_process_tree(process, "win32")
+
+    assert run.call_args.args[0] == ["taskkill", "/PID", "4321", "/T", "/F"]
+    process.terminate.assert_not_called()
+
+
+def test_stop_process_tree_falls_back_to_terminate(monkeypatch):
+    monkeypatch.setattr(gui_logic.subprocess, "run", Mock(return_value=SimpleNamespace(returncode=128)))
+    process = Mock(pid=1)
+    process.poll.return_value = None
+    stop_process_tree(process, "win32")
+    process.terminate.assert_called_once()
+
+    posix = Mock()
+    posix.poll.return_value = None
+    stop_process_tree(posix, "darwin")
+    posix.terminate.assert_called_once()
+
+    finished = Mock()
+    finished.poll.return_value = 0
+    stop_process_tree(finished, "win32")
+    finished.terminate.assert_not_called()
+
+
+def test_video_source_turns_digits_into_camera_index():
+    assert video_source(" 0 ") == 0
+    assert video_source("1") == 1
+    assert video_source(r"C:\videos\plate.mp4") == r"C:\videos\plate.mp4"
+
+
+def test_open_video_capture_uses_directshow_for_windows_cameras(monkeypatch):
+    import cv2
+
+    capture = Mock()
+    capture.isOpened.return_value = True
+    factory = Mock(return_value=capture)
+    monkeypatch.setattr(cv2, "VideoCapture", factory)
+
+    assert gui_logic.open_video_capture("0", "win32") is capture
+    factory.assert_called_once_with(0, cv2.CAP_DSHOW)
+
+    factory.reset_mock()
+    gui_logic.open_video_capture("clip.mp4", "win32")
+    factory.assert_called_once_with("clip.mp4")
+
+
+def test_open_video_capture_falls_back_when_directshow_fails(monkeypatch):
+    import cv2
+
+    failed, fallback = Mock(), Mock()
+    failed.isOpened.return_value = False
+    factory = Mock(side_effect=[failed, fallback])
+    monkeypatch.setattr(cv2, "VideoCapture", factory)
+
+    assert gui_logic.open_video_capture("0", "win32") is fallback
+    failed.release.assert_called_once()
+    assert factory.call_args.args == (0,)
+
+
+@pytest.mark.parametrize("screen, scale, expected", [
+    ((2560, 1440), 1.0, (1400, 900, 1180, 760)),
+    ((1366, 768), 1.0, (1284, 675, 1180, 675)),
+    ((1920, 1080), 1.5, (1804, 950, 1770, 950)),
+])
+def test_window_geometry_fits_screen_and_dpi(screen, scale, expected):
+    assert window_geometry(*screen, scale=scale) == expected

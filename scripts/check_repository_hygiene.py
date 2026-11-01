@@ -46,6 +46,8 @@ TEXT_SUFFIXES = {
     ".yaml",
     ".yml",
 }
+# Windows batch files are checked out with CRLF (see .gitattributes); cmd.exe misreads labels otherwise.
+CRLF_SUFFIXES = {".bat", ".cmd"}
 TEXT_FILENAMES = {
     ".editorconfig",
     ".gitattributes",
@@ -111,7 +113,7 @@ def main() -> int:
                     f"Tracked file exceeds 20 MB: {relative_path} ({size} bytes)"
                 )
 
-            if is_text_like(relative_path):
+            if is_text_like(relative_path) and suffix not in CRLF_SUFFIXES:
                 data = path.read_bytes()
                 if b"\r\n" in data or b"\r" in data:
                     failures.append(f"Text file contains CR line endings: {relative_path}")

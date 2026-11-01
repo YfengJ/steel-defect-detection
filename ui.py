@@ -29,12 +29,18 @@ from gui_logic import (
     find_result_image,
     format_conf,
     is_progress_noise,
+    is_windows,
+    open_video_capture,
     parse_confidence,
     parse_label_file,
     parse_metrics_line,
     parse_positive_int,
+    python_executable,
     read_training_progress,
+    stop_process_tree,
+    subprocess_options,
     summarize_batch,
+    window_geometry,
 )
 from path_validation import (
     validate_dataset_config,
@@ -46,11 +52,13 @@ from path_validation import (
 from ultralytics import YOLO
 
 APP_NAME = "钢材表面缺陷检测"
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.2.1"
 
 # 子进程脚本与输出目录以仓库根目录为准，避免从其他目录启动 GUI 时找不到脚本或结果
 ROOT = Path(__file__).resolve().parent
 RUNS_DIR = ROOT / "runs" / "detect"
+# 子进程解释器：从 pythonw.exe 启动 GUI 时改用同目录的 python.exe，保证能读取输出
+PYTHON = python_executable()
 
 # 日志控件最多保留的行数，防止长时间训练时内存与渲染开销持续增长
 MAX_LOG_LINES = 2000
@@ -125,7 +133,7 @@ def detect_devices():
 def open_path(path):
     """Open a file or folder with the platform's default application."""
     path = str(path)
-    if sys.platform.startswith("win"):
+    if is_windows():
         os.startfile(path)  # noqa: S606 - local path chosen by the user
     elif sys.platform == "darwin":
         subprocess.Popen(["open", path])
@@ -137,8 +145,7 @@ class YOLOv8_GUI:
     def __init__(self, master):
         self.master = master
         self.master.title(f"{APP_NAME} · YOLOv8")
-        self.master.geometry("1400x900")
-        self.master.minsize(1180, 760)
+        self._fit_window()
 
         self.style = master.style if hasattr(master, "style") else ttk.Style()
         self.theme_mode = "dark"
@@ -158,6 +165,16 @@ class YOLOv8_GUI:
         self.master.protocol("WM_DELETE_WINDOW", self.on_close)
 
     # ------------------------------------------------------------------ setup
+
+    def _fit_window(self):
+        """按屏幕和 DPI 缩放决定窗口尺寸，避免 1366x768 等小屏幕上窗口超出屏幕。"""
+        scale = self.master.winfo_fpixels("1i") / 96 if is_windows() else 1.0
+        width, height, min_w, min_h = window_geometry(
+            self.master.winfo_screenwidth(), self.master.winfo_screenheight(), scale)
+        x = max((self.master.winfo_screenwidth() - width) // 2, 0)
+        y = max((self.master.winfo_screenheight() - height) // 3, 0)
+        self.master.geometry(f"{width}x{height}+{x}+{y}")
+        self.master.minsize(min_w, min_h)
 
     def _register_themes(self):
         for mode, theme in THEMES.items():
@@ -1255,6 +1272,7 @@ class YOLOv8_GUI:
                 with subprocess.Popen(
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=str(ROOT), env=env,
                     universal_newlines=True, encoding="utf-8", errors="replace", bufsize=1,
+                    **subprocess_options(),
                 ) as process:
                     if task:
                         self._processes[task] = process
@@ -1285,7 +1303,7 @@ class YOLOv8_GUI:
             return
         self._stop_requested.add(task)
         self.log("正在停止任务…", "WARNING")
-        process.terminate()
+        stop_process_tree(process)
 
     def _task_failed(self, message):
         self.update_status(message, "danger")
@@ -1312,7 +1330,7 @@ class YOLOv8_GUI:
         self.training_active = True
         run_name = f"train_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         run_dir = RUNS_DIR / run_name
-        cmd = [sys.executable, str(ROOT / "train.py"),
+        cmd = [PYTHON, str(ROOT / "train.py"),
                "--model", absolute_path(self.train_model.get()),
                "--data", absolute_path(self.train_data.get()),
                "--epochs", str(epochs), "--batch", str(batch),
@@ -1357,7 +1375,7 @@ class YOLOv8_GUI:
         self.validation_active = True
         self.on_validation_started()
         self.update_status("验证进行中…", "primary")
-        cmd = [sys.executable, str(ROOT / "val.py"),
+        cmd = [PYTHON, str(ROOT / "val.py"),
                "--model", absolute_path(self.val_model.get()),
                "--data", absolute_path(self.val_data.get()),
                "--split", self.val_split.get()]
@@ -1399,7 +1417,7 @@ class YOLOv8_GUI:
         exp_name = f"single_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         # 记录启动时的输入，避免检测期间用户修改输入框导致报告读错文件
         source = Path(absolute_path(self.predict_source.get()))
-        cmd = [sys.executable, str(ROOT / "predict.py"),
+        cmd = [PYTHON, str(ROOT / "predict.py"),
                "--model", absolute_path(self.predict_model.get()),
                "--source", str(source), "--conf", f"{conf:g}",
                "--name", exp_name, "--project", str(RUNS_DIR)]
@@ -1443,7 +1461,7 @@ class YOLOv8_GUI:
         self.update_status("批量检测进行中…", "primary")
         exp_name = f"batch_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         source_dir = Path(absolute_path(self.batch_data.get()))
-        cmd = [sys.executable, str(ROOT / "predict.py"),
+        cmd = [PYTHON, str(ROOT / "predict.py"),
                "--model", absolute_path(self.batch_model.get()),
                "--source", str(source_dir), "--conf", f"{conf:g}",
                "--name", exp_name, "--project", str(RUNS_DIR)]
@@ -1502,7 +1520,7 @@ class YOLOv8_GUI:
             started = time.perf_counter()
             try:
                 model = YOLO(model_path)
-                cap = cv2.VideoCapture(int(source) if str(source).isdecimal() else source)
+                cap = open_video_capture(source)
                 if not cap.isOpened():
                     raise ValueError(f"无法打开视频源: {source}。请检查文件或摄像头权限。")
                 while self.video_loop_running and cap.isOpened():
@@ -1557,11 +1575,32 @@ class YOLOv8_GUI:
         self.video_loop_running = False
         for task in running:
             self._stop_requested.add(task)
-            self._processes[task].terminate()
+            stop_process_tree(self._processes[task])
         self.master.destroy()
 
 
+def enable_windows_dpi_awareness():
+    """Render crisp text on scaled Windows displays instead of a blurry bitmap-stretched window."""
+    if not is_windows():
+        return
+    import ctypes
+
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+    except (AttributeError, OSError):
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except (AttributeError, OSError):
+            pass
+    try:
+        # 任务栏使用本应用自己的图标分组，而不是归到 python.exe 下
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("YfengJ.SteelDefectDetection")
+    except (AttributeError, OSError):
+        pass
+
+
 def main():
+    enable_windows_dpi_awareness()
     app = ttk.Window(themename="darkly")
     YOLOv8_GUI(app)
     app.mainloop()

@@ -17,7 +17,8 @@ test is a GUI interaction or a headless callback test.
 | macOS arm64, Tk 9.0, ttkbootstrap 2.2, MPS | Verified for v0.2.0 with the same scripted image, batch, video and validation run |
 | macOS arm64, ttkbootstrap 1.14 | Verified for v0.2.0: every page builds, and theme switching and the training view work |
 | Manual mouse-driven click-through | Pending |
-| Windows GUI interaction | Pending |
+| Windows Server 2022 (CI), Python 3.10, CPU | v0.2.1 CI opens the real window, builds every page in both themes and closes it, and runs all callback, CLI and training smoke tests |
+| Windows GUI interaction with a real model and camera | Pending |
 | macOS camera permissions | Pending |
 | GUI CUDA selection | Device picker exposed; untested on CUDA hardware |
 

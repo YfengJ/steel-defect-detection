@@ -8,6 +8,7 @@ GUI or the command line.
 [![CI](https://github.com/YfengJ/steel-defect-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/YfengJ/steel-defect-detection/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/YfengJ/steel-defect-detection)](https://github.com/YfengJ/steel-defect-detection/releases)
 ![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11-blue?logo=python&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 ![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics%208.0.182-purple)
 ![Dataset](https://img.shields.io/badge/Dataset-NEU--DET-orange)
 ![License](https://img.shields.io/badge/License-AGPL--3.0-red)
@@ -23,7 +24,8 @@ Datasets and weights are not bundled. You prepare them locally
 ## Highlights
 
 - **Desktop app** with a sidebar workspace, dark and light themes, and a
-  CPU / Apple MPS / CUDA device picker on every page.
+  CPU / Apple MPS / CUDA device picker on every page. It runs on Windows,
+  macOS and Linux, with a one-click setup and launcher for Windows.
 - **Single image:** switch between the original and the annotated image. Every
   detection is listed with its confidence and area.
 - **Batch:** per-folder statistics, class and confidence charts, and a per-image
@@ -35,7 +37,7 @@ Datasets and weights are not bundled. You prepare them locally
 - **Validation:** overall precision, recall and mAP, plus per-class results
   parsed from `val.py`.
 - **CLI scripts** for every step, tested in CI (Ruff, unit tests, CLI smoke tests,
-  and a synthetic CPU train and validate run).
+  and a synthetic CPU train and validate run) on Linux and Windows.
 
 ## Quick Start
 
@@ -47,6 +49,10 @@ source venv/bin/activate          # Windows: venv\Scripts\activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
+
+On Windows you can instead run `scripts\windows\setup.bat` (add `cuda` for an
+NVIDIA GPU) and then double-click `start_gui.bat`. See
+[docs/windows.md](docs/windows.md).
 
 Launch the GUI:
 
@@ -61,8 +67,8 @@ python predict.py --model /path/to/trusted-best.pt --source /path/to/image.jpg -
 ```
 
 Results go to `runs/detect/<name>/`. Only load weights you trust: PyTorch
-checkpoints can contain serialized Python objects. macOS users should read
-[docs/macos.md](docs/macos.md). For a dataset-free first run, see
+checkpoints can contain serialized Python objects. Platform guides:
+[Windows](docs/windows.md) and [macOS](docs/macos.md). For a dataset-free first run, see
 [docs/sample_inference.md](docs/sample_inference.md).
 
 ## GUI Tour
@@ -197,7 +203,10 @@ steel-defect-detection/
 ├── video_predict.py       # Video and camera inference CLI
 ├── translate.py           # VOC XML → YOLO TXT conversion
 ├── path_validation.py     # Local path and dataset YAML checks
+├── cli_support.py         # Shared CLI helpers (UTF-8 console output)
 ├── dataset.yaml           # Default dataset configuration
+├── start_gui.bat          # Windows GUI launcher (no console window)
+├── scripts/windows/       # Windows one-click setup
 ├── requirements*.txt      # Runtime and contributor dependencies
 ├── tests/                 # Unit, GUI-callback, CLI and training smoke tests
 ├── docs/                  # Setup, dataset, experiment and maintenance docs
@@ -219,7 +228,7 @@ steel-defect-detection/
 
 ## Documentation
 
-- [macOS and Apple Silicon](docs/macos.md) ·
+- [Windows](docs/windows.md) · [macOS and Apple Silicon](docs/macos.md) ·
   [Sample inference](docs/sample_inference.md) ·
   [Dataset preparation](docs/dataset.md) ·
   [Troubleshooting](docs/troubleshooting.md)

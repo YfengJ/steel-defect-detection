@@ -132,3 +132,10 @@ PY
 ```
 
 If the GUI still fails, run `train.py` or `predict.py` from the command line and include the full traceback in a bug report.
+
+## GUI Does Not Start on Windows
+
+Run `start_gui.bat console` to keep a console open and read the error. The
+usual causes are a Python install without Tcl/Tk or a missing Visual C++
+runtime for PyTorch. See [windows.md](windows.md) for fixes, CUDA setup and
+other Windows-specific notes.
